@@ -1,4 +1,6 @@
 import { CheckCircle, ShieldCheck, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
+import ExplanationPanel from './ExplanationPanel.jsx';
+import { resolveExplanation } from '../lib/explanations.js';
 
 // Overlay de resultado (éxito / fallo). Devuelve null fuera de esos estados.
 //
@@ -7,13 +9,26 @@ import { CheckCircle, ShieldCheck, AlertTriangle, ArrowRight, RefreshCw } from '
 //  - 'block-win'  -> acierto y el tráfico se bloquea ("TRÁFICO BLOQUEADO (correcto)")
 //  - 'failure'    -> configuración incorrecta    ("POLÍTICA BLOQUEADA")
 // Si no llega `outcome`, se infiere del gameState (compatibilidad).
+//
+// Además del veredicto (`reason`), muestra una microlección pedagógica (T2.7) bajo
+// él, tanto en acierto como en fallo. El texto se resuelve con
+// resolveExplanation(level, reasonCode): guía específica del fallo si la hay, o el
+// concepto central del escenario en caso contrario.
 const HEADINGS = {
   'allow-win': 'TRÁFICO PERMITIDO',
   'block-win': 'TRÁFICO BLOQUEADO (correcto)',
   failure: 'POLÍTICA BLOQUEADA',
 };
 
-export default function ResultOverlay({ gameState, reason, outcome, onNext, onReconfigure }) {
+export default function ResultOverlay({
+  gameState,
+  reason,
+  outcome,
+  level,
+  reasonCode,
+  onNext,
+  onReconfigure,
+}) {
   if (gameState !== 'success' && gameState !== 'failure') return null;
 
   const isSuccess = gameState === 'success';
@@ -21,6 +36,7 @@ export default function ResultOverlay({ gameState, reason, outcome, onNext, onRe
   const isBlockWin = resolvedOutcome === 'block-win';
   const heading =
     HEADINGS[resolvedOutcome] ?? (isSuccess ? 'TRÁFICO PERMITIDO' : 'POLÍTICA BLOQUEADA');
+  const explanation = level ? resolveExplanation(level, reasonCode) : '';
 
   // Color: éxito que bloquea usa azul (acción de bloqueo correcta), éxito que
   // permite usa verde, fallo usa rojo.
@@ -31,9 +47,9 @@ export default function ResultOverlay({ gameState, reason, outcome, onNext, onRe
       : 'border-emerald-500 bg-emerald-950/50';
 
   return (
-    <div className="absolute inset-0 z-50 bg-slate-950/90 flex items-center justify-center animate-in fade-in zoom-in duration-300">
+    <div className="absolute inset-0 z-50 bg-slate-950/90 flex items-center justify-center animate-in fade-in zoom-in duration-300 p-4 overflow-y-auto">
       <div
-        className={`p-8 rounded-xl border shadow-2xl max-w-md text-center backdrop-blur-md ${tone}`}
+        className={`p-8 rounded-xl border shadow-2xl max-w-md my-auto text-center backdrop-blur-md ${tone}`}
       >
         {!isSuccess ? (
           <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
@@ -43,7 +59,8 @@ export default function ResultOverlay({ gameState, reason, outcome, onNext, onRe
           <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
         )}
         <h3 className="text-2xl font-bold text-white mb-2">{heading}</h3>
-        <p className="text-sm text-slate-300 mb-8 leading-relaxed">{reason}</p>
+        <p className="text-sm text-slate-300 mb-3 leading-relaxed">{reason}</p>
+        <ExplanationPanel text={explanation} />
         {isSuccess ? (
           <button
             onClick={onNext}

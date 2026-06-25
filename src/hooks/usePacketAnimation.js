@@ -38,7 +38,7 @@ function getZoneCoords(zoneId) {
  *
  * @param {Object}   params
  * @param {(phase: 'committing'|'animating') => void} params.onPhase
- * @param {(isWin: boolean, reason: string, effect: 'allow'|'drop') => void} params.onResult
+ * @param {(isWin: boolean, reason: string, effect: 'allow'|'drop', reasonCode: string) => void} params.onResult
  */
 export function usePacketAnimation({ onPhase, onResult }) {
   const [packetCoords, setPacketCoords] = useState(INITIAL_PACKET);
@@ -75,17 +75,22 @@ export function usePacketAnimation({ onPhase, onResult }) {
 
     // Rama terminal de specialCheck: el paquete cae, no anima al destino.
     if (verdict.terminal) {
-      onResult(true, verdict.resultMsg, 'drop');
+      onResult(true, verdict.resultMsg, 'drop', verdict.reasonCode);
       setPacketCoords((prev) => ({ ...prev, opacity: 0 }));
       return;
     }
 
     if (verdict.finalAction === 'allow' && verdict.isWin) {
       setPacketCoords((prev) => ({ ...prev, x: endCoords.x, y: endCoords.y }));
-      track(setTimeout(() => onResult(true, verdict.resultMsg, 'allow'), 1000));
+      track(setTimeout(() => onResult(true, verdict.resultMsg, 'allow', verdict.reasonCode), 1000));
     } else {
       setPacketCoords((prev) => ({ ...prev, opacity: 0, scale: 2 }));
-      track(setTimeout(() => onResult(verdict.isWin, verdict.resultMsg, 'drop'), 500));
+      track(
+        setTimeout(
+          () => onResult(verdict.isWin, verdict.resultMsg, 'drop', verdict.reasonCode),
+          500
+        )
+      );
     }
   };
 

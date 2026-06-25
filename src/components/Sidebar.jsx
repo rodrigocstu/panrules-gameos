@@ -1,7 +1,17 @@
-import { Activity, Lock, Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Activity, Lock, Globe, Lightbulb, ChevronDown } from 'lucide-react';
 
 // Barra lateral: navegación del dashboard + ticket del incidente actual.
 export default function Sidebar({ levelIdx, level }) {
+  // Disclosure de la pista (T2.7): ayuda opcional durante la configuración. Se
+  // cierra al cambiar de nivel para no arrastrar la pista del escenario anterior.
+  const [showHint, setShowHint] = useState(false);
+  useEffect(() => {
+    setShowHint(false);
+  }, [levelIdx]);
+
+  const hintPanelId = 'sidebar-hint-panel';
+
   return (
     // sm: ocupa ancho completo como banda horizontal (flex-row).
     // lg: vuelve al carril lateral (col-span-2, flex-col).
@@ -39,6 +49,36 @@ export default function Sidebar({ levelIdx, level }) {
               <span className="text-white">{level.packet.dstIp}</span>
             </div>
           </div>
+
+          {/* Pista opcional (T2.7): ayuda durante la configuración. */}
+          {level.hint && (
+            <div className="mt-3 pt-2 border-t border-slate-700">
+              <button
+                type="button"
+                onClick={() => setShowHint((v) => !v)}
+                aria-expanded={showHint}
+                aria-controls={hintPanelId}
+                className="flex items-center justify-between w-full text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Lightbulb size={13} aria-hidden="true" /> Pista
+                </span>
+                <ChevronDown
+                  size={14}
+                  aria-hidden="true"
+                  className={`transition-transform ${showHint ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {showHint && (
+                <p
+                  id={hintPanelId}
+                  className="mt-2 text-xs text-slate-300 leading-relaxed font-sans"
+                >
+                  {level.hint}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

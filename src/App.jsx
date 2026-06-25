@@ -28,6 +28,9 @@ export default function FirewallNGFW() {
   const [selectedLog, setSelectedLog] = useState(null);
   // outcome: 'allow-win' | 'block-win' | 'failure' | null  (preservado — T2.1)
   const [outcome, setOutcome] = useState(null);
+  // reasonCode del último veredicto (T2.7): permite mostrar la microlección
+  // específica del fallo en el ExplanationPanel del resultado.
+  const [reasonCode, setReasonCode] = useState(null);
 
   // Policy State
   const [ruleName, setRuleName] = useState('Rule-1');
@@ -41,11 +44,13 @@ export default function FirewallNGFW() {
 
   const level = LEVELS[levelIdx];
 
-  const handleResult = (isWin, reason, effect) => {
+  const handleResult = (isWin, reason, effect, code) => {
     setGameState(isWin ? 'success' : 'failure');
     // outcome para el overlay (T2.1): acierto que permite vs. acierto que bloquea
     // vs. fallo. Coherente con el veredicto del motor (effect === finalAction).
     setOutcome(!isWin ? 'failure' : effect === 'allow' ? 'allow-win' : 'block-win');
+    // reasonCode del veredicto para la microlección del resultado (T2.7).
+    setReasonCode(code ?? null);
     setLogs((prev) => [createLog(level, effect, reason), ...prev]);
 
     // Registrar intento e, si ganó, marcar nivel completado (T3.2).
@@ -132,6 +137,8 @@ export default function FirewallNGFW() {
               gameState={gameState}
               reason={logs[0]?.reason}
               outcome={outcome}
+              level={level}
+              reasonCode={reasonCode}
               onNext={nextLevel}
               onReconfigure={() => setGameState('idle')}
             />
