@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Terminal, Copy, Check } from 'lucide-react';
 import { buildSetCommands } from '../lib/setCommand.js';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 // Puente a PAN-OS real (T3.4): al acertar, muestra el comando `set` equivalente
 // a la política creada, con los rulebases Security y NAT separados. Incluye un
 // botón de copiar y la advertencia de validar contra la versión propia.
 export default function SetCommandPanel({ level, ruleName }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   if (!level) return null;
 
@@ -25,27 +27,27 @@ export default function SetCommandPanel({ level, ruleName }) {
 
   return (
     <section
-      aria-label="Comando set equivalente en PAN-OS"
+      aria-label={t('set.title')}
       className="mb-4 text-left bg-slate-950/70 border border-slate-700 rounded-lg overflow-hidden"
     >
       <div className="flex items-center justify-between px-3 py-2 bg-slate-900/80 border-b border-slate-700">
         <span className="flex items-center gap-1.5 text-xs font-bold text-orange-400">
-          <Terminal size={13} aria-hidden="true" /> Comando set (PAN-OS)
+          <Terminal size={13} aria-hidden="true" /> {t('set.title')}
         </span>
         <button
           type="button"
           onClick={copy}
           className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded px-1.5 py-0.5"
-          aria-label="Copiar comandos set al portapapeles"
+          aria-label={t('set.aria.copy')}
         >
           {copied ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
-          {copied ? 'Copiado' : 'Copiar'}
+          {copied ? t('set.copied') : t('set.copy')}
         </button>
       </div>
       <pre className="px-3 py-2 text-xs leading-relaxed text-emerald-300 font-mono whitespace-pre-wrap break-words max-h-40 overflow-y-auto">
         {security.length > 0 && (
           <>
-            <span className="text-slate-500"># Security rulebase</span>
+            <span className="text-slate-500">{t('set.security')}</span>
             {'\n'}
             {security.join('\n')}
           </>
@@ -53,15 +55,15 @@ export default function SetCommandPanel({ level, ruleName }) {
         {nat.length > 0 && (
           <>
             {'\n\n'}
-            <span className="text-slate-500"># NAT rulebase (tabla separada)</span>
+            <span className="text-slate-500">{t('set.nat')}</span>
             {'\n'}
             {nat.join('\n')}
           </>
         )}
       </pre>
       <p className="px-3 py-1.5 text-[11px] text-slate-500 border-t border-slate-800">
-        Sintaxis orientativa: <strong>valida contra tu versión de PAN-OS</strong> (PAN-OS /
-        Panorama).
+        {t('set.disclaimer.prefix')} <strong>{t('set.disclaimer.bold')}</strong>{' '}
+        {t('set.disclaimer.suffix')}
       </p>
     </section>
   );

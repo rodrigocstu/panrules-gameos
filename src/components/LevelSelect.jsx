@@ -1,5 +1,6 @@
 import { CheckCircle, PlayCircle, X } from 'lucide-react';
 import { useModalA11y } from '../hooks/useModalA11y.js';
+import { useI18n, pickText } from '../i18n/I18nContext.jsx';
 
 const TITLE_ID = 'level-select-title';
 
@@ -22,6 +23,7 @@ export default function LevelSelect({
   onSelect,
   onClose,
 }) {
+  const { lang, t } = useI18n();
   const { containerRef } = useModalA11y(true, onClose);
 
   return (
@@ -39,12 +41,12 @@ export default function LevelSelect({
         {/* Cabecera */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
           <h2 id={TITLE_ID} className="text-xl font-bold text-white">
-            Elegir escenario
+            {t('select.title')}
           </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"
-            aria-label="Cerrar selector de escenarios"
+            aria-label={t('select.aria.close')}
           >
             <X size={24} />
           </button>
@@ -88,23 +90,30 @@ export default function LevelSelect({
                     {/* Texto */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-mono text-slate-400">Nivel {level.id}</span>
+                        <span className="text-xs font-mono text-slate-400">
+                          {t('select.level')} {level.id}
+                        </span>
                         {isCurrent && (
                           <span className="text-xs bg-orange-600 text-white px-1.5 py-0.5 rounded font-semibold">
-                            actual
+                            {t('select.current')}
                           </span>
                         )}
                         {isCompleted && (
                           <span className="text-xs bg-emerald-700 text-white px-1.5 py-0.5 rounded font-semibold">
-                            completado
+                            {t('select.completed')}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm font-semibold text-white mt-0.5">{level.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">{level.desc}</p>
+                      <p className="text-sm font-semibold text-white mt-0.5">
+                        {pickText(level.title, lang)}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-0.5 line-clamp-2">
+                        {pickText(level.desc, lang)}
+                      </p>
                       {levelAttempts > 0 && (
                         <p className="text-xs text-slate-500 mt-1">
-                          {levelAttempts} {levelAttempts === 1 ? 'intento' : 'intentos'}
+                          {levelAttempts}{' '}
+                          {levelAttempts === 1 ? t('select.attempt') : t('select.attempts')}
                         </p>
                       )}
                     </div>

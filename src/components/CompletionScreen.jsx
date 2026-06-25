@@ -1,5 +1,6 @@
 import { Award, RotateCcw, List } from 'lucide-react';
 import { useModalA11y } from '../hooks/useModalA11y.js';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 const TITLE_ID = 'completion-title';
 
@@ -15,6 +16,7 @@ const TITLE_ID = 'completion-title';
  *   onSelectLevel  : () => void — abre el selector de niveles.
  */
 export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSelectLevel }) {
+  const { t } = useI18n();
   const totalAttempts = Object.values(attempts).reduce((sum, n) => sum + n, 0);
 
   // No hay cierre explícito en este modal; usamos onSelectLevel como escape.
@@ -41,32 +43,27 @@ export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSe
 
         {/* Título */}
         <h2 id={TITLE_ID} className="text-3xl font-bold text-white mb-2">
-          ¡Certificación PCNSE!
+          {t('done.title')}
         </h2>
-        <p className="text-yellow-400 font-semibold text-lg mb-4">
-          Todos los escenarios completados
-        </p>
+        <p className="text-yellow-400 font-semibold text-lg mb-4">{t('done.subtitle')}</p>
 
         {/* Estadísticas */}
         <div className="bg-slate-900/60 rounded-xl p-4 mb-8 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-400">Escenarios completados</span>
+            <span className="text-slate-400">{t('done.stat.completed')}</span>
             <span className="text-white font-bold">
               {totalLevels} / {totalLevels}
             </span>
           </div>
           {totalAttempts > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-slate-400">Total de intentos</span>
+              <span className="text-slate-400">{t('done.stat.attempts')}</span>
               <span className="text-white font-bold">{totalAttempts}</span>
             </div>
           )}
         </div>
 
-        <p className="text-slate-300 text-sm leading-relaxed mb-8">
-          Has demostrado dominar la configuración de políticas de seguridad y NAT en PAN-OS. Puedes
-          repetir cualquier escenario para practicar.
-        </p>
+        <p className="text-slate-300 text-sm leading-relaxed mb-8">{t('done.body')}</p>
 
         {/* Acciones */}
         <div className="flex flex-col gap-3">
@@ -75,14 +72,14 @@ export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSe
             className="bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400"
           >
             <List size={18} />
-            Elegir nivel
+            {t('done.choose')}
           </button>
           <button
             onClick={onRepeat}
             className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             <RotateCcw size={18} />
-            Repetir desde el inicio
+            {t('done.repeat')}
           </button>
         </div>
       </div>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Activity, Lock, Globe, Lightbulb, ChevronDown, LayoutGrid } from 'lucide-react';
+import { useI18n, pickText } from '../i18n/I18nContext.jsx';
 
 // Barra lateral: navegación del dashboard + ticket del incidente actual.
 // `onOpenLevelSelect` abre el selector de niveles (T3.3) durante el juego.
 export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
+  const { lang, t } = useI18n();
   // Disclosure de la pista (T2.7): ayuda opcional durante la configuración. Se
   // cierra al cambiar de nivel para no arrastrar la pista del escenario anterior.
   const [showHint, setShowHint] = useState(false);
@@ -12,6 +14,7 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
   }, [levelIdx]);
 
   const hintPanelId = 'sidebar-hint-panel';
+  const hint = pickText(level.hint, lang);
 
   return (
     // sm: ocupa ancho completo como banda horizontal (flex-row).
@@ -20,24 +23,24 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
       {/* Sección de navegación */}
       <div className="lg:px-4 lg:mb-6 shrink-0 lg:shrink">
         <div className="text-xs font-bold text-slate-500 mb-1 lg:mb-2 uppercase tracking-wider hidden lg:block">
-          Dashboard
+          {t('side.dashboard')}
         </div>
         <div className="flex flex-row lg:flex-col gap-1">
           <div className="flex items-center gap-2 text-slate-300 bg-slate-800 px-3 py-2 rounded cursor-pointer border-l-2 border-orange-500 text-xs whitespace-nowrap">
-            <Activity size={14} /> Monitor
+            <Activity size={14} /> {t('side.monitor')}
           </div>
           <div className="flex items-center gap-2 text-slate-400 px-3 py-2 hover:text-slate-200 cursor-pointer text-xs whitespace-nowrap">
-            <Lock size={14} /> Policies
+            <Lock size={14} /> {t('side.policies')}
           </div>
           <div className="flex items-center gap-2 text-slate-400 px-3 py-2 hover:text-slate-200 cursor-pointer text-xs whitespace-nowrap">
-            <Globe size={14} /> Network
+            <Globe size={14} /> {t('side.network')}
           </div>
           <button
             type="button"
             onClick={onOpenLevelSelect}
             className="flex items-center gap-2 text-slate-400 px-3 py-2 hover:text-slate-200 cursor-pointer text-xs whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded text-left"
           >
-            <LayoutGrid size={14} /> Niveles
+            <LayoutGrid size={14} /> {t('side.levels')}
           </button>
         </div>
       </div>
@@ -45,8 +48,10 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
       {/* Ticket del incidente */}
       <div className="lg:px-4 lg:mt-auto flex-1 lg:flex-none min-w-[200px] lg:min-w-0">
         <div className="bg-slate-800 rounded p-3 border border-slate-700">
-          <h3 className="text-xs font-bold text-orange-500 mb-1">Incident #{2040 + levelIdx}</h3>
-          <p className="text-xs text-slate-400 leading-tight mb-2">{level.desc}</p>
+          <h3 className="text-xs font-bold text-orange-500 mb-1">
+            {t('side.incident')} #{2040 + levelIdx}
+          </h3>
+          <p className="text-xs text-slate-400 leading-tight mb-2">{pickText(level.desc, lang)}</p>
           <div className="pt-2 border-t border-slate-700 grid grid-cols-1 gap-1 text-xs font-mono">
             <div className="flex justify-between">
               <span className="text-slate-500">SRC:</span>{' '}
@@ -59,7 +64,7 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
           </div>
 
           {/* Pista opcional (T2.7): ayuda durante la configuración. */}
-          {level.hint && (
+          {hint && (
             <div className="mt-3 pt-2 border-t border-slate-700">
               <button
                 type="button"
@@ -69,7 +74,7 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
                 className="flex items-center justify-between w-full text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
               >
                 <span className="flex items-center gap-1.5">
-                  <Lightbulb size={13} aria-hidden="true" /> Pista
+                  <Lightbulb size={13} aria-hidden="true" /> {t('side.hint')}
                 </span>
                 <ChevronDown
                   size={14}
@@ -82,7 +87,7 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
                   id={hintPanelId}
                   className="mt-2 text-xs text-slate-300 leading-relaxed font-sans"
                 >
-                  {level.hint}
+                  {hint}
                 </p>
               )}
             </div>

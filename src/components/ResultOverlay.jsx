@@ -2,24 +2,18 @@ import { CheckCircle, ShieldCheck, AlertTriangle, ArrowRight, RefreshCw } from '
 import ExplanationPanel from './ExplanationPanel.jsx';
 import SetCommandPanel from './SetCommandPanel.jsx';
 import { resolveExplanation } from '../lib/explanations.js';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 // Overlay de resultado (éxito / fallo). Devuelve null fuera de esos estados.
 //
-// El encabezado deriva de `outcome` (T2.1), NO de un texto hardcodeado:
-//  - 'allow-win'  -> acierto y el tráfico pasa   ("TRÁFICO PERMITIDO")
-//  - 'block-win'  -> acierto y el tráfico se bloquea ("TRÁFICO BLOQUEADO (correcto)")
-//  - 'failure'    -> configuración incorrecta    ("POLÍTICA BLOQUEADA")
-// Si no llega `outcome`, se infiere del gameState (compatibilidad).
+// El encabezado deriva de `outcome` (T2.1), traducido (T3.6):
+//  - 'allow-win'  -> acierto y el tráfico pasa
+//  - 'block-win'  -> acierto y el tráfico se bloquea
+//  - 'failure'    -> configuración incorrecta
 //
-// Además del veredicto (`reason`), muestra una microlección pedagógica (T2.7) bajo
-// él, tanto en acierto como en fallo. El texto se resuelve con
-// resolveExplanation(level, reasonCode): guía específica del fallo si la hay, o el
-// concepto central del escenario en caso contrario.
-const HEADINGS = {
-  'allow-win': 'TRÁFICO PERMITIDO',
-  'block-win': 'TRÁFICO BLOQUEADO (correcto)',
-  failure: 'POLÍTICA BLOQUEADA',
-};
+// El veredicto (línea bajo el encabezado) se TRADUCE por `reasonCode` interpolando
+// los valores esperados desde level.solution, en lugar de mostrar el texto del
+// motor (que es ES fijo). Debajo, una microlección pedagógica (T2.7) bilingüe.
 
 export default function ResultOverlay({
   gameState,
@@ -31,17 +25,35 @@ export default function ResultOverlay({
   onNext,
   onReconfigure,
 }) {
+  const { lang, t } = useI18n();
   if (gameState !== 'success' && gameState !== 'failure') return null;
 
   const isSuccess = gameState === 'success';
   const resolvedOutcome = outcome ?? (isSuccess ? 'allow-win' : 'failure');
   const isBlockWin = resolvedOutcome === 'block-win';
-  const heading =
-    HEADINGS[resolvedOutcome] ?? (isSuccess ? 'TRÁFICO PERMITIDO' : 'POLÍTICA BLOQUEADA');
-  const explanation = level ? resolveExplanation(level, reasonCode) : '';
 
-  // Color: éxito que bloquea usa azul (acción de bloqueo correcta), éxito que
-  // permite usa verde, fallo usa rojo.
+  const HEADINGS = {
+    'allow-win': t('result.allow'),
+    'block-win': t('result.block'),
+    failure: t('result.fail'),
+  };
+  const heading = HEADINGS[resolvedOutcome] ?? (isSuccess ? t('result.allow') : t('result.fail'));
+
+  // Veredicto traducido por reasonCode (T3.6); si falta el código, cae al texto
+  // del motor (`reason`). Interpola los valores esperados desde la solución.
+  const sol = level?.solution ?? {};
+  const reasonText = reasonCode
+    ? t(`reason.${reasonCode}`, {
+        app: sol.app,
+        service: sol.service,
+        nat: sol.nat,
+        profile: sol.profile,
+      })
+    : reason;
+
+  const explanation = level ? resolveExplanation(level, reasonCode, lang) : '';
+
+  // Color: éxito que bloquea usa azul, éxito que permite usa verde, fallo rojo.
   const tone = !isSuccess
     ? 'border-red-500 bg-red-950/50'
     : isBlockWin
@@ -61,8 +73,8 @@ export default function ResultOverlay({
           <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
         )}
         <h3 className="text-2xl font-bold text-white mb-2">{heading}</h3>
-        <p className="text-sm text-slate-300 mb-3 leading-relaxed">{reason}</p>
-        <ExplanationPanel text={explanation} />
+        <p className="text-sm text-slate-300 mb-3 leading-relaxed">{reasonText}</p>
+        <ExplanationPanel text={explanation} title={t('result.why')} />
         {/* Puente a PAN-OS real (T3.4): el comando set solo al acertar. */}
         {isSuccess && <SetCommandPanel level={level} ruleName={ruleName} />}
         {isSuccess ? (
@@ -70,14 +82,14 @@ export default function ResultOverlay({
             onClick={onNext}
             className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 mx-auto transition-all hover:scale-105"
           >
-            Next Scenario <ArrowRight size={18} />
+            {t('result.next')} <ArrowRight size={18} />
           </button>
         ) : (
           <button
             onClick={onReconfigure}
             className="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 mx-auto"
           >
-            <RefreshCw size={18} /> Reconfigure
+            <RefreshCw size={18} /> {t('result.reconfigure')}
           </button>
         )}
       </div>

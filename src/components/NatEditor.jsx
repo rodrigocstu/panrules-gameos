@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
 // Editor del NAT RULEBASE (T2.6) — una tabla SEPARADA de la Security Policy, tal
 // como en PAN-OS real. El jugador elige el tipo de NAT y el editor muestra, con
@@ -6,10 +7,10 @@ import { ArrowRight } from 'lucide-react';
 //
 // `disabled` bloquea el select durante commit/animación (gameState !== 'idle').
 const NAT_OPTIONS = [
-  { id: 'NONE', label: 'No NAT' },
-  { id: 'SNAT', label: 'Source NAT (SNAT)' },
-  { id: 'DNAT', label: 'Destination NAT (DNAT)' },
-  { id: 'DNAT+SNAT', label: 'U-Turn (DNAT+SNAT)' },
+  { id: 'NONE', labelKey: 'nat.opt.none' },
+  { id: 'SNAT', labelKey: 'nat.opt.snat' },
+  { id: 'DNAT', labelKey: 'nat.opt.dnat' },
+  { id: 'DNAT+SNAT', labelKey: 'nat.opt.uturn' },
 ];
 
 // Qué direcciones traduce cada tipo de NAT (para resaltar las filas relevantes).
@@ -21,6 +22,7 @@ const TRANSLATES = {
 };
 
 export default function NatEditor({ level, natType, setNatType, disabled }) {
+  const { t } = useI18n();
   const selectBase =
     'rounded p-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500';
 
@@ -51,7 +53,7 @@ export default function NatEditor({ level, natType, setNatType, disabled }) {
       </span>
       {active && (
         <span className="ml-auto rounded bg-blue-900/40 px-1.5 py-0.5 text-[10px] font-bold uppercase text-blue-400">
-          translated
+          {t('nat.badge.translated')}
         </span>
       )}
     </div>
@@ -63,9 +65,9 @@ export default function NatEditor({ level, natType, setNatType, disabled }) {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="text-xs text-slate-500 font-bold uppercase border-b border-slate-700">
-              <th className="p-2">Name</th>
-              <th className="p-2">Original Packet</th>
-              <th className="p-2 text-blue-400">NAT Type</th>
+              <th className="p-2">{t('editor.col.name')}</th>
+              <th className="p-2">{t('nat.col.original')}</th>
+              <th className="p-2 text-blue-400">{t('nat.col.type')}</th>
             </tr>
           </thead>
           <tbody>
@@ -80,11 +82,11 @@ export default function NatEditor({ level, natType, setNatType, disabled }) {
                   onChange={(e) => setNatType(e.target.value)}
                   className={`bg-slate-900 border border-blue-900/50 text-blue-400 w-44 ${selectBase}`}
                   disabled={disabled}
-                  aria-label="Tipo de NAT (NAT rulebase)"
+                  aria-label={t('nat.aria.type')}
                 >
                   {NAT_OPTIONS.map((o) => (
                     <option key={o.id} value={o.id}>
-                      {o.label}
+                      {t(o.labelKey)}
                     </option>
                   ))}
                 </select>
@@ -96,34 +98,28 @@ export default function NatEditor({ level, natType, setNatType, disabled }) {
         {/* Panel "Translated Packet": qué traduce el NAT elegido, con IPs del nivel */}
         <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
           <div className="mb-2 text-xs font-bold uppercase tracking-wider text-blue-400">
-            Translated Packet
+            {t('nat.translated')}
           </div>
           <div className="flex flex-col gap-2">
             <TranslationRow
-              dirLabel="Source"
+              dirLabel={t('nat.dir.source')}
               original={natData.source.original}
               translated={natData.source.translated}
               active={translates.source}
             />
             <TranslationRow
-              dirLabel="Dest"
+              dirLabel={t('nat.dir.dest')}
               original={natData.destination.original}
               translated={natData.destination.translated}
               active={translates.destination}
             />
           </div>
           {natType === 'NONE' && (
-            <p className="mt-2 text-xs text-slate-500">
-              Sin NAT: el paquete cruza el firewall con sus IPs originales.
-            </p>
+            <p className="mt-2 text-xs text-slate-500">{t('nat.none.note')}</p>
           )}
         </div>
 
-        <p className="mt-3 text-xs text-slate-500 leading-relaxed">
-          En PAN-OS el <span className="text-blue-400">NAT Rulebase</span> es una tabla
-          independiente de la Security Policy. Aquí defines la traducción de direcciones; la
-          Security Policy evalúa las IPs originales (pre-NAT).
-        </p>
+        <p className="mt-3 text-xs text-slate-500 leading-relaxed">{t('nat.explainer')}</p>
       </div>
     </div>
   );

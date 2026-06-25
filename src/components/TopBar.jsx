@@ -1,7 +1,11 @@
-import { Shield } from 'lucide-react';
+import { Shield, Languages } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext.jsx';
 
-// Barra superior estática: marca del simulador + dispositivo.
+// Barra superior: marca del simulador + selector de idioma + dispositivo.
 export default function TopBar() {
+  const { lang, setLang, t } = useI18n();
+  const next = lang === 'es' ? 'en' : 'es';
+
   return (
     <div className="bg-slate-950 border-b border-slate-800 px-4 lg:px-6 py-3 flex justify-between items-center z-50">
       <div className="flex items-center gap-3">
@@ -13,12 +17,23 @@ export default function TopBar() {
             PAN-OS <span className="text-orange-500">NGFW</span>{' '}
             <span className="hidden sm:inline">SIMULATOR</span>
           </h1>
-          <div className="text-xs text-slate-500 font-mono">MANAGEMENT CONSOLE</div>
+          <div className="text-xs text-slate-500 font-mono">{t('top.console')}</div>
         </div>
       </div>
-      <div className="flex items-center gap-6 text-xs font-mono">
+      <div className="flex items-center gap-3 lg:gap-6 text-xs font-mono">
+        {/* Selector de idioma (T3.6): cambia ES/EN sin recargar. */}
+        <button
+          type="button"
+          onClick={() => setLang(next)}
+          className="flex items-center gap-1.5 px-2 py-1 rounded border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+          aria-label={t('lang.switchTo')}
+          title={t('lang.switchTo')}
+        >
+          <Languages size={14} aria-hidden="true" />
+          <span className="font-bold">{t(`lang.${lang}`)}</span>
+        </button>
         <div className="flex flex-col items-end">
-          <span className="text-slate-500 hidden sm:block">DEVICE</span>
+          <span className="text-slate-500 hidden sm:block">{t('top.device')}</span>
           <span className="text-emerald-400">PA-3220-HQ</span>
         </div>
       </div>

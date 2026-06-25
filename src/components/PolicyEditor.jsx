@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ZONES, APPS, SERVICES, PROFILES } from '../data/constants.js';
+import { useI18n } from '../i18n/I18nContext.jsx';
 import NatEditor from './NatEditor.jsx';
 
 // Editor de políticas: dos rulebases en pestañas, como en PAN-OS real (T2.6).
@@ -27,6 +28,7 @@ export default function PolicyEditor({
   setNatType,
   disabled,
 }) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState('security');
   const selectBase =
     'rounded p-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500';
@@ -48,7 +50,7 @@ export default function PolicyEditor({
           className={tabClass('security', 'text-orange-500')}
           aria-pressed={activeTab === 'security'}
         >
-          Security Policy
+          {t('editor.tab.security')}
         </button>
         <button
           type="button"
@@ -56,7 +58,7 @@ export default function PolicyEditor({
           className={tabClass('nat', 'text-blue-400')}
           aria-pressed={activeTab === 'nat'}
         >
-          NAT
+          {t('editor.tab.nat')}
         </button>
       </div>
 
@@ -69,13 +71,13 @@ export default function PolicyEditor({
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-xs text-slate-500 font-bold uppercase border-b border-slate-700">
-                  <th className="p-2">Name</th>
-                  <th className="p-2">Source</th>
-                  <th className="p-2">Dest</th>
-                  <th className="p-2">App</th>
-                  <th className="p-2">Service</th>
-                  <th className="p-2">Action</th>
-                  <th className="p-2 text-orange-400">Profile</th>
+                  <th className="p-2">{t('editor.col.name')}</th>
+                  <th className="p-2">{t('editor.col.source')}</th>
+                  <th className="p-2">{t('editor.col.dest')}</th>
+                  <th className="p-2">{t('editor.col.app')}</th>
+                  <th className="p-2">{t('editor.col.service')}</th>
+                  <th className="p-2">{t('editor.col.action')}</th>
+                  <th className="p-2 text-orange-400">{t('editor.col.profile')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -85,7 +87,7 @@ export default function PolicyEditor({
                       value={ruleName}
                       onChange={(e) => setRuleName(e.target.value)}
                       className="bg-transparent text-white w-20 focus:outline-none focus-visible:ring-1 focus-visible:ring-orange-500 rounded"
-                      aria-label="Nombre de la regla"
+                      aria-label={t('editor.aria.ruleName')}
                     />
                   </td>
                   <td className="p-2">
@@ -94,7 +96,7 @@ export default function PolicyEditor({
                       onChange={(e) => setSrcZone(e.target.value)}
                       className={`bg-slate-900 border border-slate-600 w-20 text-emerald-400 ${selectBase}`}
                       disabled={disabled}
-                      aria-label="Zona origen"
+                      aria-label={t('editor.aria.srcZone')}
                     >
                       {Object.values(ZONES).map((z) => (
                         <option key={z.id} value={z.id}>
@@ -109,7 +111,7 @@ export default function PolicyEditor({
                       onChange={(e) => setDstZone(e.target.value)}
                       className={`bg-slate-900 border border-slate-600 w-20 text-blue-400 ${selectBase}`}
                       disabled={disabled}
-                      aria-label="Zona destino"
+                      aria-label={t('editor.aria.dstZone')}
                     >
                       {Object.values(ZONES).map((z) => (
                         <option key={z.id} value={z.id}>
@@ -124,7 +126,7 @@ export default function PolicyEditor({
                       onChange={(e) => setApp(e.target.value)}
                       className={`bg-slate-900 border border-slate-600 w-20 ${selectBase}`}
                       disabled={disabled}
-                      aria-label="Aplicación"
+                      aria-label={t('editor.aria.app')}
                     >
                       {APPS.map((a) => (
                         <option key={a.id} value={a.id}>
@@ -139,7 +141,7 @@ export default function PolicyEditor({
                       onChange={(e) => setService(e.target.value)}
                       className={`bg-slate-900 border border-slate-600 w-24 ${selectBase}`}
                       disabled={disabled}
-                      aria-label="Servicio"
+                      aria-label={t('editor.aria.service')}
                     >
                       {SERVICES.map((s) => (
                         <option key={s.id} value={s.id}>
@@ -154,10 +156,10 @@ export default function PolicyEditor({
                       onChange={(e) => setAction(e.target.value)}
                       className={`border w-16 font-bold ${action === 'ALLOW' ? 'bg-emerald-900 border-emerald-700 text-emerald-400' : 'bg-red-900 border-red-700 text-red-400'} ${selectBase}`}
                       disabled={disabled}
-                      aria-label="Acción"
+                      aria-label={t('editor.aria.action')}
                     >
-                      <option value="ALLOW">Allow</option>
-                      <option value="DENY">Deny</option>
+                      <option value="ALLOW">{t('editor.action.allow')}</option>
+                      <option value="DENY">{t('editor.action.deny')}</option>
                     </select>
                   </td>
                   <td className="p-2">
@@ -166,7 +168,7 @@ export default function PolicyEditor({
                       onChange={(e) => setProfile(e.target.value)}
                       className={`bg-slate-900 border border-orange-900/50 text-orange-400 w-20 ${selectBase}`}
                       disabled={disabled}
-                      aria-label="Perfil de seguridad"
+                      aria-label={t('editor.aria.profile')}
                     >
                       {PROFILES.map((p) => (
                         <option key={p.id} value={p.id}>
