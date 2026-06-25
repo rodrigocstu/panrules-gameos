@@ -1,4 +1,4 @@
-# IMPROVEMENTS.md — backlog para palo-rules-game
+# IMPROVEMENTS.md — backlog para panrules-gameos
 
 Backlog priorizado para ejecutar con **Claude Code**. Cada tarea está pensada como **una sesión / un PR**:
 acotada, con criterios de aceptación verificables. Sugerencia: ejecutarlas en orden; usar *Plan Mode*

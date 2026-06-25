@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useProgress } from '../hooks/useProgress.js';
 
-const STORAGE_KEY = 'palo-rules-game:progress:v2';
+const STORAGE_KEY = 'panrules-gameos:progress:v2';
 
 beforeEach(() => {
   localStorage.clear();

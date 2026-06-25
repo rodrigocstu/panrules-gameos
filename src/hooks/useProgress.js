@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 
 // Clave con versión para poder romper compatibilidad si cambia el esquema.
 // v2 añade puntuación y racha (T3.7).
-const STORAGE_KEY = 'palo-rules-game:progress:v2';
+const STORAGE_KEY = 'panrules-gameos:progress:v2';
 
 const EMPTY = {
   levelIdx: 0,

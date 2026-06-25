@@ -10,7 +10,7 @@ import { pickText } from './pickText';
 //   Si falta la clave, cae a ES y, en último caso, devuelve la propia clave.
 // - El idioma se persiste en localStorage para mantenerlo entre sesiones.
 
-const STORAGE_KEY = 'palo-rules-game:lang:v1';
+const STORAGE_KEY = 'panrules-gameos:lang:v1';
 const SUPPORTED = ['es', 'en'];
 const DEFAULT_LANG = 'es';
 

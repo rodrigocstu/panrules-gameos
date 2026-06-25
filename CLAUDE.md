@@ -1,4 +1,4 @@
-# CLAUDE.md — palo-rules-game
+# CLAUDE.md — panrules-gameos
 
 Contexto persistente para Claude Code. Se lee al inicio de cada sesión. Mantenerlo corto y verdadero.
 
@@ -9,7 +9,7 @@ Juego web educativo: un simulador de consola NGFW de Palo Alto. El jugador recib
 seguridad y tipo de NAT), hacer *commit*, y ver un paquete animado cruzar las zonas. El objetivo
 pedagógico real es entender **DNAT / SNAT** y la lógica de reglas de seguridad.
 
-Demo en producción: https://koetsuji.github.io/palo-rules-game/
+Demo en producción: https://rodrigocstu.github.io/panrules-gameos/
 
 ## Stack
 
@@ -26,7 +26,7 @@ Demo en producción: https://koetsuji.github.io/palo-rules-game/
 - `npm run lint` — ESLint.
 - `npm run deploy` — publica `dist/` en GitHub Pages vía `gh-pages` (hace build antes).
 
-> `vite.config.js` define `base: "/palo-rules-game/"`. Cualquier ruta de assets absoluta
+> `vite.config.js` define `base: "/panrules-gameos/"`. Cualquier ruta de assets absoluta
 > (p. ej. `/favicon.svg`) debe respetar ese base o fallará en Pages.
 
 ## Arquitectura actual (punto de partida)
