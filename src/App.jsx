@@ -139,6 +139,7 @@ export default function FirewallNGFW() {
               outcome={outcome}
               level={level}
               reasonCode={reasonCode}
+              ruleName={ruleName}
               onNext={nextLevel}
               onReconfigure={() => setGameState('idle')}
             />

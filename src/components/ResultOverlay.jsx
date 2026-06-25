@@ -1,5 +1,6 @@
 import { CheckCircle, ShieldCheck, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import ExplanationPanel from './ExplanationPanel.jsx';
+import SetCommandPanel from './SetCommandPanel.jsx';
 import { resolveExplanation } from '../lib/explanations.js';
 
 // Overlay de resultado (éxito / fallo). Devuelve null fuera de esos estados.
@@ -26,6 +27,7 @@ export default function ResultOverlay({
   outcome,
   level,
   reasonCode,
+  ruleName,
   onNext,
   onReconfigure,
 }) {
@@ -61,6 +63,8 @@ export default function ResultOverlay({
         <h3 className="text-2xl font-bold text-white mb-2">{heading}</h3>
         <p className="text-sm text-slate-300 mb-3 leading-relaxed">{reason}</p>
         <ExplanationPanel text={explanation} />
+        {/* Puente a PAN-OS real (T3.4): el comando set solo al acertar. */}
+        {isSuccess && <SetCommandPanel level={level} ruleName={ruleName} />}
         {isSuccess ? (
           <button
             onClick={onNext}
