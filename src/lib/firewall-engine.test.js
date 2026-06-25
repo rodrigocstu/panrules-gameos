@@ -1,95 +1,27 @@
 import { describe, it, expect } from 'vitest';
 import { evaluate } from './firewall-engine.js';
+import { LEVELS } from '../data/levels.js';
 
-/**
- * Fixtures que reflejan los niveles reales de App.jsx. En WP-2 (T1.1) los niveles
- * se extraerán a src/data/levels.js y estos tests importarán los datos reales.
- */
-const level1 = {
-  id: 1,
-  packet: {
-    srcZone: 'trust',
-    dstZone: 'untrust',
-    srcIp: '10.1.1.55',
-    dstIp: '142.250.1.1',
-    proto: 'TCP/443',
-    app: 'ssl',
-  },
-  solution: {
-    srcZone: 'trust',
-    dstZone: 'untrust',
-    app: 'ssl',
-    service: 'application-default',
-    action: 'ALLOW',
-    nat: 'SNAT',
-    profile: 'default',
-  },
-};
+// Niveles reales del juego (extraídos a src/data/levels.js en WP-2 / T1.1).
+const level1 = LEVELS[0]; // Secure Internet Access (ALLOW + SNAT)
+const level3 = LEVELS[2]; // Block Non-Standard SSH (specialCheck)
+const level5 = LEVELS[4]; // Data Exfiltration Attempt (DENY)
 
-const level3 = {
-  id: 3,
-  packet: {
-    srcZone: 'trust',
-    dstZone: 'dmz',
-    srcIp: '10.1.1.100',
-    dstIp: '192.168.50.5',
-    proto: 'TCP/2222',
-    app: 'ssh',
-  },
-  solution: {
-    srcZone: 'trust',
-    dstZone: 'dmz',
-    app: 'ssh',
-    service: 'application-default',
-    action: 'ALLOW',
-    nat: 'NONE',
-    profile: 'none',
-  },
-  specialCheck: (cfg) => {
-    if (cfg.service === 'application-default')
-      return {
-        success: false,
-        msg: "DROPPED: App-ID 'ssh' on port 2222 contradicts 'application-default' (Port 22). Good job enforcing standards!",
-      };
-    if (cfg.service === 'any')
-      return {
-        success: true,
-        msg: 'WARNING: You allowed SSH on a non-standard port. It works, but violates security best practice.',
-      };
-    return { success: false, msg: 'Configuration mismatch.' };
-  },
-};
+// Helper: construye una config a partir de la solución del nivel (+ overrides).
+// La solución no trae `nat` siempre presente como campo de config, así que lo
+// normalizamos desde solution.nat.
+const configFrom = (level, overrides = {}) => ({
+  srcZone: level.solution.srcZone,
+  dstZone: level.solution.dstZone,
+  app: level.solution.app,
+  service: level.solution.service,
+  action: level.solution.action,
+  nat: level.solution.nat,
+  profile: level.solution.profile,
+  ...overrides,
+});
 
-const level5 = {
-  id: 5,
-  packet: {
-    srcZone: 'guest',
-    dstZone: 'untrust',
-    srcIp: '172.16.0.99',
-    dstIp: '1.2.3.4',
-    proto: 'UDP/53',
-    app: 'dns',
-  },
-  solution: {
-    srcZone: 'guest',
-    dstZone: 'untrust',
-    app: 'dns',
-    service: 'application-default',
-    action: 'DENY',
-    nat: 'NONE',
-    profile: 'any',
-  },
-};
-
-const correctLevel1Config = {
-  srcZone: 'trust',
-  dstZone: 'untrust',
-  app: 'ssl',
-  service: 'application-default',
-  action: 'ALLOW',
-  nat: 'SNAT',
-  profile: 'default',
-};
+const correctLevel1Config = configFrom(level1);
 
 describe('evaluate() — camino feliz (nivel 1, ALLOW)', () => {
   it('aprueba la configuración correcta y deja pasar el tráfico', () => {
@@ -123,10 +55,7 @@ describe('evaluate() — mismatches (nivel 1)', () => {
 
 describe('evaluate() — specialCheck terminal (nivel 3)', () => {
   it('devuelve un veredicto terminal cuando application-default contradice el puerto 2222', () => {
-    const verdict = evaluate(
-      { ...level3.solution, nat: 'NONE', service: 'application-default' },
-      level3
-    );
+    const verdict = evaluate(configFrom(level3, { service: 'application-default' }), level3);
     expect(verdict.terminal).toBe(true);
     expect(verdict.isWin).toBe(true);
     expect(verdict.resultMsg).toContain('DROPPED');
@@ -138,18 +67,7 @@ describe('evaluate() — comportamiento ACTUAL con bugs conocidos (referencia pa
   // Este test FIJA el comportamiento actual; T2.1 (WP-3) lo cambiará a un mensaje
   // de bloqueo y este test deberá actualizarse junto con el fix.
   it('[BUG #1] nivel 5 DENY correcto: isWin true y finalAction drop, pero msg dice "Traffic Allowed"', () => {
-    const verdict = evaluate(
-      {
-        srcZone: 'guest',
-        dstZone: 'untrust',
-        app: 'dns',
-        service: 'application-default',
-        action: 'DENY',
-        nat: 'NONE',
-        profile: 'any',
-      },
-      level5
-    );
+    const verdict = evaluate(configFrom(level5), level5);
     expect(verdict.isWin).toBe(true);
     expect(verdict.finalAction).toBe('drop');
     expect(verdict.resultMsg).toBe('Traffic Allowed'); // <- a corregir en T2.1
