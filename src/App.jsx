@@ -18,26 +18,16 @@ import {
   Eye,
   X,
 } from 'lucide-react';
-import { evaluate } from './lib/firewall-engine.js';
 import { ZONES, APPS, SERVICES, PROFILES } from './data/constants.js';
 import { LEVELS } from './data/levels.js';
+import { usePacketAnimation } from './hooks/usePacketAnimation.js';
 
 export default function FirewallNGFW() {
   const [levelIdx, setLevelIdx] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [gameState, setGameState] = useState('idle');
   const [logs, setLogs] = useState([]);
-  const [commitProgress, setCommitProgress] = useState(0);
   const [selectedLog, setSelectedLog] = useState(null);
-
-  // Animation State
-  const [packetCoords, setPacketCoords] = useState({
-    x: 50,
-    y: 50,
-    opacity: 0,
-    color: 'bg-white',
-    label: '',
-  });
 
   // Policy State
   const [ruleName, setRuleName] = useState('Rule-1');
@@ -50,107 +40,6 @@ export default function FirewallNGFW() {
   const [natType, setNatType] = useState('NONE');
 
   const level = LEVELS[levelIdx];
-
-  // Coordinates tuned for the Grid Layout (Left box center ~17%, Right box center ~83%)
-  const getZoneCoords = (zoneId) => {
-    switch (zoneId) {
-      case 'trust':
-        return { x: 17, y: 25 };
-      case 'untrust':
-        return { x: 83, y: 25 };
-      case 'guest':
-        return { x: 17, y: 75 };
-      case 'dmz':
-        return { x: 83, y: 75 };
-      case 'firewall':
-        return { x: 50, y: 50 };
-      default:
-        return { x: 50, y: 50 };
-    }
-  };
-
-  const startCommit = () => {
-    setGameState('committing');
-    setCommitProgress(0);
-    const start = getZoneCoords(level.packet.srcZone);
-    setPacketCoords({ ...start, opacity: 0, color: 'bg-white', label: level.packet.proto });
-
-    let p = 0;
-    const interval = setInterval(() => {
-      p += 5;
-      if (p >= 100) {
-        clearInterval(interval);
-        setCommitProgress(100);
-        setTimeout(() => {
-          setGameState('animating');
-          runPacketAnimation();
-        }, 500);
-      } else {
-        setCommitProgress(p);
-      }
-    }, 50);
-  };
-
-  const runPacketAnimation = () => {
-    const start = getZoneCoords(level.packet.srcZone);
-    const fw = getZoneCoords('firewall');
-    const end = getZoneCoords(level.packet.dstZone);
-
-    // 1. Appear at Source
-    setPacketCoords({ ...start, opacity: 1, color: 'bg-yellow-400', label: level.packet.srcIp });
-
-    // 2. Move to Firewall
-    setTimeout(() => {
-      setPacketCoords((prev) => ({ ...prev, x: fw.x, y: fw.y }));
-    }, 500); // Slightly slower for dramatic effect
-
-    // 3. Process & TRANSFORM (Visual NAT)
-    setTimeout(() => {
-      let nextColor = 'bg-yellow-400';
-      let nextLabel = level.packet.srcIp;
-
-      if (action === 'ALLOW') {
-        if (natType === 'SNAT') {
-          nextColor = 'bg-orange-500';
-          nextLabel = 'NAT: 203.0.113.1';
-        } else if (natType === 'DNAT') {
-          nextColor = 'bg-purple-500';
-          nextLabel = `NAT: ${level.packet.srcIp}`;
-        } else if (natType === 'DNAT+SNAT') {
-          nextColor = 'bg-purple-500 border-2 border-orange-500';
-          nextLabel = 'U-TURN NAT';
-        }
-      }
-
-      setPacketCoords((prev) => ({ ...prev, color: nextColor, label: nextLabel }));
-      evaluateTraffic(end);
-    }, 1500);
-  };
-
-  const evaluateTraffic = (endCoords) => {
-    const config = { srcZone, dstZone, app, service, action, nat: natType, profile };
-    const verdict = evaluate(config, level);
-
-    // Rama terminal de specialCheck: el paquete cae, no anima al destino.
-    if (verdict.terminal) {
-      handleResult(true, verdict.resultMsg, 'drop');
-      setPacketCoords((prev) => ({ ...prev, opacity: 0 }));
-      return;
-    }
-
-    if (verdict.finalAction === 'allow' && verdict.isWin) {
-      setPacketCoords((prev) => ({ ...prev, x: endCoords.x, y: endCoords.y }));
-      setTimeout(() => handleResult(true, verdict.resultMsg, 'allow'), 1000);
-    } else {
-      setPacketCoords((prev) => ({ ...prev, opacity: 0, scale: 2 }));
-      setTimeout(() => handleResult(verdict.isWin, verdict.resultMsg, 'drop'), 500);
-    }
-  };
-
-  const handleResult = (isWin, reason, effect) => {
-    setGameState(isWin ? 'success' : 'failure');
-    addLog(effect, reason);
-  };
 
   const addLog = (action, reason) => {
     const newLog = {
@@ -168,6 +57,23 @@ export default function FirewallNGFW() {
     setLogs((prev) => [newLog, ...prev]);
   };
 
+  const handleResult = (isWin, reason, effect) => {
+    setGameState(isWin ? 'success' : 'failure');
+    addLog(effect, reason);
+  };
+
+  // La animación y sus timers viven en el hook (cleanup garantizado, invariante #7).
+  const { packetCoords, commitProgress, startCommit, resetPacket } = usePacketAnimation({
+    onPhase: setGameState,
+    onResult: handleResult,
+  });
+
+  // Snapshot de la política actual; los selects están deshabilitados durante la
+  // animación, así que estos valores no cambian hasta que vuelve a 'idle'.
+  const commitPolicy = () => {
+    startCommit(level, { srcZone, dstZone, app, service, action, nat: natType, profile });
+  };
+
   const nextLevel = () => {
     if (levelIdx < LEVELS.length - 1) {
       setLevelIdx((prev) => prev + 1);
@@ -176,7 +82,7 @@ export default function FirewallNGFW() {
       setNatType('NONE');
       setApp('any');
       setProfile('none');
-      setPacketCoords({ x: 50, y: 50, opacity: 0, color: 'bg-white', label: '' });
+      resetPacket();
     } else {
       alert('PCNSE Certification Achieved! All scenarios complete.');
       setLevelIdx(0);
@@ -658,7 +564,7 @@ export default function FirewallNGFW() {
 
           <div className="absolute bottom-36 right-6 z-50">
             <button
-              onClick={startCommit}
+              onClick={commitPolicy}
               disabled={gameState !== 'idle'}
               className={`flex items-center gap-2 px-6 py-4 rounded-lg shadow-2xl font-bold text-sm transition-all transform ${gameState === 'idle' ? 'bg-orange-600 hover:bg-orange-500 text-white hover:scale-105' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
             >
