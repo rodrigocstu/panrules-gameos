@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ZONES, APPS, SERVICES, PROFILES } from '../data/constants.js';
+import { ZONES, APPS, SERVICES, PROFILES } from '../data/constants';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import NatEditor from './NatEditor.jsx';
 

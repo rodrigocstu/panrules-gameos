@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { LEVELS } from './data/levels.js';
-import { createLog } from './lib/logs.js';
+import { LEVELS } from './data/levels';
+import { createLog } from './lib/logs';
 import { usePacketAnimation } from './hooks/usePacketAnimation.js';
 import { useProgress } from './hooks/useProgress.js';
 import TopBar from './components/TopBar.jsx';

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { evaluate } from '../lib/firewall-engine.js';
+import { evaluate } from '../lib/firewall-engine';
 
 // Estado inicial del paquete (centro del visualizer, invisible).
 const INITIAL_PACKET = { x: 50, y: 50, opacity: 0, color: 'bg-white', label: '' };

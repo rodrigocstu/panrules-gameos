@@ -5,7 +5,9 @@
 // Convención de claves: namespace.punto.minúsculas. Interpolación con {var}.
 // ES es el idioma fuente (audiencia hispanohablante); EN es la traducción.
 
-export const STRINGS = {
+import type { Lang } from '../types/domain.js';
+
+export const STRINGS: Record<Lang, Record<string, string>> = {
   es: {
     // Idioma
     'lang.label': 'Idioma',

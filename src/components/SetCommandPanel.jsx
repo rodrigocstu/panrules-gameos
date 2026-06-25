@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Terminal, Copy, Check } from 'lucide-react';
-import { buildSetCommands } from '../lib/setCommand.js';
+import { buildSetCommands } from '../lib/setCommand';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 // Puente a PAN-OS real (T3.4): al acertar, muestra el comando `set` equivalente

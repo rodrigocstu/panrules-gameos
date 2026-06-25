@@ -3,9 +3,11 @@
 // y a string. Vive aparte de I18nContext para que la capa lib (motor, explicaciones)
 // lo use sin arrastrar React.
 
-export const DEFAULT_LANG = 'es';
+import type { Lang, LocalizedText } from '../types/domain.js';
 
-export function pickText(field, lang) {
+export const DEFAULT_LANG: Lang = 'es';
+
+export function pickText(field: LocalizedText | null | undefined, lang: Lang): string {
   if (field == null) return '';
   if (typeof field === 'string') return field;
   return field[lang] ?? field[DEFAULT_LANG] ?? '';

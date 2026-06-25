@@ -5,44 +5,29 @@
  * configuración de política del jugador y el nivel, y devuelve un veredicto. El
  * componente se encarga de la animación y de pintar el resultado.
  *
- * FASE 2 / WP-3 (correcciones pedagógicas): el motor ahora deriva el resultado de
+ * FASE 2 / WP-3 (correcciones pedagógicas): el motor deriva el resultado de
  * `level.solution` (la fuente de verdad), valida App-ID / service / perfil con
- * semántica PAN-OS real y produce un veredicto coherente con la acción. Los bugs
- * #1–#5 (CLAUDE.md §Invariantes) quedan corregidos.
+ * semántica PAN-OS real y produce un veredicto coherente con la acción.
  *
- * @typedef {Object} PolicyConfig
- * @property {string} srcZone
- * @property {string} dstZone
- * @property {string} app
- * @property {string} service
- * @property {'ALLOW'|'DENY'} action
- * @property {string} nat
- * @property {string} profile
- *
- * @typedef {'allow-win'|'block-win'|'failure'} Outcome
- *
- * @typedef {Object} Verdict
- * @property {boolean} isWin       ¿el jugador acertó el escenario?
- * @property {string}  resultMsg   mensaje a mostrar / loguear
- * @property {'allow'|'drop'} finalAction  destino final del paquete
- * @property {boolean} terminal    true si vino de specialCheck (no animar al destino)
- * @property {Outcome} outcome     clasificación del resultado para la UI/overlay:
- *                                  'allow-win'  = acierto y el tráfico pasa,
- *                                  'block-win'  = acierto y el tráfico se bloquea,
- *                                  'failure'    = configuración incorrecta.
- * @property {string}  reasonCode  código estable de la rama (para tests/i18n).
+ * T1.5: tipado con el dominio (PolicyConfig, Level, Verdict, ReasonCode).
  */
+
+import type {
+  PolicyConfig,
+  Level,
+  Verdict,
+  ProfileId,
+  RequiredProfile,
+  Action,
+  NatType,
+  ReasonCode,
+} from '../types/domain';
 
 // Orden de severidad de perfiles de seguridad: a mayor índice, más inspección.
 // PAN-OS: un Security Profile Group más estricto incluye lo que cubre el inferior.
-const PROFILE_RANK = { none: 0, default: 1, strict: 2 };
+const PROFILE_RANK: Record<ProfileId, number> = { none: 0, default: 1, strict: 2 };
 
-/**
- * @param {PolicyConfig} config
- * @param {Object} level
- * @returns {Verdict}
- */
-export function evaluate(config, level) {
+export function evaluate(config: PolicyConfig, level: Level): Verdict {
   const { srcZone, dstZone, app, service, action, nat, profile } = config;
   const solution = level.solution;
 
@@ -52,8 +37,7 @@ export function evaluate(config, level) {
   if (level.specialCheck) {
     const res = level.specialCheck(config);
 
-    // DROPPED: el paquete cae por diseño (p. ej. App-ID 'ssh' contradice
-    // application-default en puerto no estándar). Es un acierto que BLOQUEA.
+    // DROPPED: el paquete cae por diseño. Es un acierto que BLOQUEA.
     if (res.msg.includes('DROPPED')) {
       return {
         isWin: true,
@@ -65,8 +49,7 @@ export function evaluate(config, level) {
       };
     }
 
-    // WARNING: funciona pero viola la buena práctica. El tráfico pasa, así que
-    // se registra como acierto-con-aviso (allow-win) pero terminal.
+    // WARNING: funciona pero viola la buena práctica. El tráfico pasa.
     if (res.msg.includes('WARNING')) {
       return {
         isWin: true,
@@ -78,8 +61,7 @@ export function evaluate(config, level) {
       };
     }
 
-    // Cualquier otra rama del specialCheck (p. ej. "Configuration mismatch") es
-    // un FALLO terminal: no se delega a la validación genérica (corrige bug #4).
+    // Cualquier otra rama del specialCheck es un FALLO terminal (corrige bug #4).
     return {
       isWin: false,
       resultMsg: res.msg || 'Incorrect Configuration',
@@ -90,11 +72,9 @@ export function evaluate(config, level) {
     };
   }
 
-  // 2. SECURITY RULEBASE (orden de prioridad PAN-OS). NAT NO se evalúa aquí: en
-  //    PAN-OS real es un rulebase aparte (T2.6). Estos checks son SOLO de Security
-  //    Policy: zona, App-ID, service, acción y perfil de seguridad.
+  // 2. Cadena de validación genérica (orden de prioridad PAN-OS).
   let resultMsg = '';
-  let reasonCode = '';
+  let reasonCode: ReasonCode | '' = '';
 
   if (srcZone !== level.packet.srcZone || dstZone !== level.packet.dstZone) {
     resultMsg = 'Zone Mismatch';
@@ -124,13 +104,10 @@ export function evaluate(config, level) {
     }
   }
 
-  // 3. NAT RULEBASE — paso SEPARADO (T2.6). Solo se evalúa si la Security Policy
-  //    pasó: en PAN-OS el NAT rulebase es una tabla distinta y el jugador la
-  //    configura aparte de la regla de Security. Validar aquí mantiene los dos
-  //    veredictos conceptualmente distintos: se puede acertar Security pero fallar
-  //    NAT, y el mensaje dice explícitamente cuál rulebase falló.
-  //    Solo aplica cuando el tráfico se PERMITE: una regla DENY descarta el
-  //    paquete en Security y nunca alcanza el NAT rulebase.
+  // 3. NAT RULEBASE — paso SEPARADO (T2.6). Solo si la Security Policy pasó: en
+  //    PAN-OS el NAT rulebase es una tabla distinta. Mantiene los dos veredictos
+  //    conceptualmente separados (se puede acertar Security y fallar NAT). Solo
+  //    aplica al PERMITIR: una DENY descarta el paquete antes del NAT rulebase.
   if (!reasonCode && solution.action === 'ALLOW') {
     const natResult = checkNat(nat, solution.nat);
     if (natResult) {
@@ -164,18 +141,23 @@ export function evaluate(config, level) {
   };
 }
 
+interface ProfileFailure {
+  msg: string;
+  code: Extract<ReasonCode, 'PROFILE_MISSING' | 'PROFILE_INSUFFICIENT'>;
+}
+
 /**
  * Valida el perfil de seguridad con semántica "se requiere AL MENOS X" (T2.5).
- * Devuelve null si el perfil es válido, o `{ msg, code }` con el fallo.
- *
- * @param {'ALLOW'|'DENY'} action
- * @param {string} profile          perfil elegido por el jugador
- * @param {string|undefined} required  solution.profile ('none'|'default'|'strict'|'any')
+ * Devuelve null si el perfil es válido, o el fallo con su mensaje y código.
  */
-function checkProfile(action, profile, required) {
-  // Sin requisito o requisito 'any': el perfil es irrelevante (p. ej. una regla
-  // DENY no necesita inspección de amenazas).
-  if (!required || required === 'any') return null;
+function checkProfile(
+  action: Action,
+  profile: ProfileId,
+  required: RequiredProfile
+): ProfileFailure | null {
+  // Sin requisito 'any': el perfil es irrelevante (p. ej. una regla DENY no
+  // necesita inspección de amenazas).
+  if (required === 'any') return null;
 
   // El requisito de perfil solo aplica a reglas ALLOW (el tráfico que pasa es el
   // que se inspecciona). Una DENY no inspecciona.
@@ -200,29 +182,30 @@ function checkProfile(action, profile, required) {
 }
 
 // Etiquetas legibles de cada tipo de NAT para los mensajes del NAT rulebase.
-const NAT_LABEL = {
+const NAT_LABEL: Record<NatType, string> = {
   NONE: 'sin NAT (No NAT)',
   SNAT: 'Source NAT (SNAT)',
   DNAT: 'Destination NAT (DNAT)',
   'DNAT+SNAT': 'U-Turn NAT (DNAT+SNAT)',
 };
 
+interface NatFailure {
+  msg: string;
+  code: Extract<ReasonCode, 'NAT_MISMATCH'>;
+}
+
 /**
  * Valida la regla del NAT RULEBASE de forma SEPARADA a la Security Policy (T2.6).
- * En PAN-OS el NAT es una tabla distinta; este check evalúa solo si el tipo de
- * NAT configurado coincide con el que el escenario requiere. Devuelve null si es
- * correcto, o `{ msg, code }` describiendo el fallo en términos del NAT rulebase.
- *
- * @param {string} nat       tipo de NAT elegido por el jugador en el NAT editor
- * @param {string} required  solution.nat ('NONE'|'SNAT'|'DNAT'|'DNAT+SNAT')
+ * Devuelve null si el tipo de NAT coincide, o el fallo descrito en términos del
+ * NAT rulebase. Distingue tres casos: falta NAT, NAT donde no debe, tipo erróneo.
  */
-function checkNat(nat, required) {
+function checkNat(nat: NatType, required: NatType): NatFailure | null {
   if (nat === required) return null;
 
   const want = NAT_LABEL[required] ?? required;
   const have = NAT_LABEL[nat] ?? nat;
 
-  // Caso especial pedagógico: falta NAT por completo donde se necesitaba.
+  // Falta NAT por completo donde se necesitaba.
   if (required !== 'NONE' && nat === 'NONE') {
     return {
       msg: `NAT Rulebase: falta la regla de NAT. La Security Policy es correcta, pero este tráfico necesita ${want} en el NAT rulebase (una tabla aparte de Security en PAN-OS).`,
@@ -230,7 +213,7 @@ function checkNat(nat, required) {
     };
   }
 
-  // Caso especial: se aplicó NAT donde no debía (tráfico interno sin traducción).
+  // Se aplicó NAT donde no debía (tráfico interno sin traducción).
   if (required === 'NONE' && nat !== 'NONE') {
     return {
       msg: `NAT Rulebase: este tráfico no debe traducirse. Configuraste ${have}, pero la regla correcta es ${want}. El NAT rulebase es independiente de la Security Policy en PAN-OS.`,

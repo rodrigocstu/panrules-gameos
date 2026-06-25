@@ -1,12 +1,22 @@
 // Construcción del registro de tráfico que se muestra en el panel de logs.
 // Lógica de dominio pura (sin React), reutilizable y testeable.
 
-/**
- * @param {Object} level   nivel actual (aporta el paquete observado).
- * @param {'allow'|'drop'} effect  efecto final sobre el paquete.
- * @param {string} reason  mensaje del veredicto.
- */
-export function createLog(level, effect, reason) {
+import type { Level } from '../types/domain.js';
+
+export interface TrafficLog {
+  id: number;
+  time: string;
+  src: string;
+  dst: string;
+  app: string;
+  action: string;
+  bytes: number;
+  reason: string;
+  flags: string;
+  country: string;
+}
+
+export function createLog(level: Level, effect: 'allow' | 'drop', reason: string): TrafficLog {
   return {
     id: Date.now(),
     time: new Date().toLocaleTimeString(),

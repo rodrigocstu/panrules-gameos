@@ -22,7 +22,9 @@
 //  - type / source{original,translated} / destination{original,translated} / packetLabel.
 //  - Cuando una dirección no se traduce, translated === original ("identidad").
 
-export const LEVELS = [
+import type { Level } from '../types/domain.js';
+
+export const LEVELS: Level[] = [
   {
     id: 1,
     title: { es: 'Acceso seguro a Internet', en: 'Secure Internet Access' },

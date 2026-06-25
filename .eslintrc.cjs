@@ -17,7 +17,20 @@ module.exports = {
   },
   overrides: [
     {
-      files: ['**/*.test.{js,jsx}', 'src/test/**'],
+      // Capa lib/data tipada (T1.5): parser de TypeScript + reglas recomendadas.
+      files: ['**/*.ts', '**/*.tsx'],
+      parser: '@typescript-eslint/parser',
+      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+      plugins: ['@typescript-eslint'],
+      extends: ['plugin:@typescript-eslint/recommended'],
+      rules: {
+        // El motor usa el patrón `reasonCode: ReasonCode | ''` y casts controlados.
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      },
+    },
+    {
+      files: ['**/*.test.{js,jsx,ts,tsx}', 'src/test/**'],
       globals: {
         describe: 'readonly',
         it: 'readonly',

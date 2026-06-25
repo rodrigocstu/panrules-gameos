@@ -3,24 +3,16 @@
  *
  * Función pura `resolveExplanation(level, reasonCode, lang)` SIN React: dado un
  * nivel, el `reasonCode` estable del veredicto y el idioma, devuelve el texto del
- * "por qué" (T2.7) que el ExplanationPanel renderiza bajo el veredicto.
- *
- * Estrategia (en orden de prioridad):
- *  1. Si el `reasonCode` corresponde a un fallo concreto de la Security Policy o del
- *     NAT rulebase, devolvemos una guía específica de ese fallo (REASON_GUIDANCE):
- *     enseña el concepto PAN-OS detrás del error, no el código.
- *  2. En cualquier otro caso (acierto, o fallo sin guía específica) devolvemos la
- *     `explanation` del nivel: la microlección del concepto central del escenario.
- *
- * Contenido bilingüe ES/EN (T3.6), PCNSE-correcto.
+ * "por qué" (T2.7). Si el reasonCode tiene guía específica de fallo, la usa; en
+ * otro caso cae a la `explanation` del nivel. Contenido bilingüe ES/EN (T3.6).
  */
 
-import { pickText, DEFAULT_LANG } from '../i18n/pickText.js';
+import { pickText, DEFAULT_LANG } from '../i18n/pickText';
+import type { Level, ReasonCode, Lang } from '../types/domain';
 
-// Guía pedagógica por código de fallo, bilingüe. Cada entrada cita el comportamiento
-// PAN-OS real, no el código de error. Solo cubre fallos genéricos (no terminales);
-// el resto cae a `level.explanation`.
-const REASON_GUIDANCE = {
+// Guía pedagógica por código de fallo, bilingüe. Solo cubre fallos genéricos
+// (no terminales); el resto cae a `level.explanation`.
+const REASON_GUIDANCE: Partial<Record<ReasonCode, Record<Lang, string>>> = {
   ZONE_MISMATCH: {
     es: 'En PAN-OS la Security Policy hace match por zona origen y zona destino (no por interfaz). Las zonas de la regla deben coincidir con las del paquete; recuerda que en escenarios con NAT la zona destino es la post-NAT (la que resuelve el route-lookup), aunque la IP destino siga siendo la pública pre-NAT.',
     en: 'In PAN-OS the Security Policy matches on source and destination zone (not on interface). The rule zones must match the packet zones; remember that in NAT scenarios the destination zone is the post-NAT one (resolved by the route lookup), even though the destination IP is still the pre-NAT public address.',
@@ -51,14 +43,12 @@ const REASON_GUIDANCE = {
   },
 };
 
-/**
- * @param {Object} level                  el nivel actual (con `explanation` bilingüe).
- * @param {string|undefined} reasonCode   reasonCode del veredicto del motor.
- * @param {string} [lang]                 idioma ('es' | 'en'); default 'es'.
- * @returns {string} el texto de la microlección a mostrar.
- */
-export function resolveExplanation(level, reasonCode, lang = DEFAULT_LANG) {
-  const guidance = reasonCode && REASON_GUIDANCE[reasonCode];
+export function resolveExplanation(
+  level: Level | null | undefined,
+  reasonCode: ReasonCode | undefined,
+  lang: Lang = DEFAULT_LANG
+): string {
+  const guidance = reasonCode ? REASON_GUIDANCE[reasonCode] : undefined;
   if (guidance) {
     return guidance[lang] ?? guidance[DEFAULT_LANG];
   }

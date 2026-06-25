@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { STRINGS } from './strings.js';
-import { pickText } from './pickText.js';
+import { STRINGS } from './strings';
+import { pickText } from './pickText';
 
 // i18n ligero por Context (T3.6). Sin dependencias externas: el dominio es
 // pequeño y un Context + función `t` cubre el caso ES/EN cambiando sin recargar.

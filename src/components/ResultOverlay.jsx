@@ -1,7 +1,7 @@
 import { CheckCircle, ShieldCheck, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import ExplanationPanel from './ExplanationPanel.jsx';
 import SetCommandPanel from './SetCommandPanel.jsx';
-import { resolveExplanation } from '../lib/explanations.js';
+import { resolveExplanation } from '../lib/explanations';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 // Overlay de resultado (éxito / fallo). Devuelve null fuera de esos estados.
