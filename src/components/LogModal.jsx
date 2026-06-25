@@ -1,17 +1,36 @@
 import { Search } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y.js';
+
+const TITLE_ID = 'log-modal-title';
 
 // Modal de detalle de un registro de tráfico. Devuelve null si no hay log.
 export default function LogModal({ log, onClose }) {
+  const isOpen = !!log;
+  const { containerRef } = useModalA11y(isOpen, onClose);
+
   if (!log) return null;
 
   return (
-    <div className="absolute inset-0 z-[60] bg-black/80 flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
-      <div className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 w-full max-w-2xl overflow-hidden">
+    <div
+      className="absolute inset-0 z-[60] bg-black/80 flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={TITLE_ID}
+    >
+      <div
+        ref={containerRef}
+        className="bg-slate-800 rounded-lg shadow-2xl border border-slate-600 w-full max-w-2xl overflow-hidden"
+        tabIndex={-1}
+      >
         <div className="bg-slate-900 p-4 border-b border-slate-700 flex justify-between items-center">
-          <h3 className="font-bold text-white flex items-center gap-2">
+          <h3 id={TITLE_ID} className="font-bold text-white flex items-center gap-2">
             <Search size={18} className="text-orange-500" /> Traffic Log Detail
           </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded px-2 py-1"
+            aria-label="Cerrar detalle de log"
+          >
             Close
           </button>
         </div>

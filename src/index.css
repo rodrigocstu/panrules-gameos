@@ -17,3 +17,70 @@ body {
     Arial,
     sans-serif;
 }
+
+/* ─── Responsive: layout stack en móvil ─────────────────────────────────── */
+/* App.jsx usa grid-cols-12 con col-span-2 (sidebar) + col-span-10 (centro)
+   y no puede editarse (está fuera del scope de T3.5). Usamos CSS para
+   reescribir los grid spans debajo de lg sin tocar el JSX de App.jsx.
+   En lg+ (≥1024px) las clases de Tailwind de App.jsx dominan normalmente. */
+@media (max-width: 1023px) {
+  /* El contenedor principal pasa a una sola columna */
+  .flex-1.grid.grid-cols-12 {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* El panel central (col-span-10) ocupa todo el ancho disponible */
+  .flex-1.grid.grid-cols-12 > .col-span-10 {
+    width: 100%;
+  }
+}
+
+/* ─── Accesibilidad: foco visible global ──────────────────────────────────── */
+/* Cualquier elemento focusable que no tenga ya un ring de Tailwind recibe
+   un contorno naranja visible. Los componentes que usan focus-visible:ring-*
+   de Tailwind anulan este valor automáticamente. */
+:focus-visible {
+  outline: 2px solid #f97316; /* orange-500 */
+  outline-offset: 2px;
+}
+
+/* Eliminar el outline por defecto solo cuando hay un reemplazo visible.
+   Nunca usar outline:none de forma global sin este par. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ─── prefers-reduced-motion ─────────────────────────────────────────────── */
+/* Usuarios que prefieren movimiento reducido: desactivamos/atenuamos las
+   animaciones de Tailwind más intensas. La animación del paquete usa
+   transiciones CSS (transition-all duration-500) que seguirán funcionando
+   al reducir su duración, por lo que el paquete aún se mueve visualmente. */
+@media (prefers-reduced-motion: reduce) {
+  /* Deshabilitar animate-ping (burbujas del paquete) */
+  .animate-ping {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  /* Deshabilitar animate-bounce (flecha de onboarding) */
+  .animate-bounce {
+    animation: none !important;
+  }
+
+  /* Reducir animate-pulse a un parpadeo sutil */
+  .animate-pulse {
+    animation: none !important;
+    opacity: 0.8;
+  }
+
+  /* Acortar todas las transiciones CSS para que el movimiento sea instantáneo
+     sin romper la lógica de la animación del paquete */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

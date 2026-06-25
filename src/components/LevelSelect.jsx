@@ -1,4 +1,7 @@
 import { CheckCircle, PlayCircle, X } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y.js';
+
+const TITLE_ID = 'level-select-title';
 
 /**
  * LevelSelect — panel modal para elegir o repetir cualquier escenario.
@@ -19,17 +22,25 @@ export default function LevelSelect({
   onSelect,
   onClose,
 }) {
+  const { containerRef } = useModalA11y(true, onClose);
+
   return (
     <div
       className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200"
       role="dialog"
       aria-modal="true"
-      aria-label="Selector de escenarios"
+      aria-labelledby={TITLE_ID}
     >
-      <div className="bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]">
+      <div
+        ref={containerRef}
+        className="bg-slate-800 border border-slate-600 rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[90vh]"
+        tabIndex={-1}
+      >
         {/* Cabecera */}
         <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-white">Elegir escenario</h2>
+          <h2 id={TITLE_ID} className="text-xl font-bold text-white">
+            Elegir escenario
+          </h2>
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded"

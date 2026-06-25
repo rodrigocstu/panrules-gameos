@@ -1,4 +1,7 @@
 import { Award, RotateCcw, List } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y.js';
+
+const TITLE_ID = 'completion-title';
 
 /**
  * CompletionScreen — pantalla de cierre al completar todos los escenarios.
@@ -14,9 +17,21 @@ import { Award, RotateCcw, List } from 'lucide-react';
 export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSelectLevel }) {
   const totalAttempts = Object.values(attempts).reduce((sum, n) => sum + n, 0);
 
+  // No hay cierre explícito en este modal; usamos onSelectLevel como escape.
+  const { containerRef } = useModalA11y(true, onSelectLevel);
+
   return (
-    <div className="fixed inset-0 z-[120] bg-slate-950/95 backdrop-blur-md flex items-center justify-center animate-in fade-in zoom-in duration-300">
-      <div className="bg-slate-800 border border-yellow-500 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center">
+    <div
+      className="fixed inset-0 z-[120] bg-slate-950/95 backdrop-blur-md flex items-center justify-center animate-in fade-in zoom-in duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={TITLE_ID}
+    >
+      <div
+        ref={containerRef}
+        className="bg-slate-800 border border-yellow-500 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center"
+        tabIndex={-1}
+      >
         {/* Ícono principal */}
         <div className="flex justify-center mb-4">
           <div className="bg-yellow-500/20 p-4 rounded-full">
@@ -25,7 +40,9 @@ export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSe
         </div>
 
         {/* Título */}
-        <h2 className="text-3xl font-bold text-white mb-2">¡Certificación PCNSE!</h2>
+        <h2 id={TITLE_ID} className="text-3xl font-bold text-white mb-2">
+          ¡Certificación PCNSE!
+        </h2>
         <p className="text-yellow-400 font-semibold text-lg mb-4">
           Todos los escenarios completados
         </p>

@@ -4,11 +4,11 @@ import { Eye } from 'lucide-react';
 export default function TrafficLog({ logs, onSelectLog }) {
   return (
     <div className="h-32 bg-slate-950 border-t border-slate-800 flex flex-col">
-      <div className="px-3 py-1 bg-slate-900 text-[10px] text-slate-400 font-bold border-b border-slate-800">
+      <div className="px-3 py-1 bg-slate-900 text-xs text-slate-400 font-bold border-b border-slate-800">
         TRAFFIC LOGS (CLICK ROW FOR DETAILS)
       </div>
       <div className="overflow-auto flex-1">
-        <table className="w-full text-left text-[10px] font-mono">
+        <table className="w-full text-left text-xs font-mono">
           <thead className="sticky top-0 bg-slate-950 text-slate-500">
             <tr>
               <th className="p-1">Time</th>
@@ -23,7 +23,16 @@ export default function TrafficLog({ logs, onSelectLog }) {
               <tr
                 key={log.id}
                 onClick={() => onSelectLog(log)}
-                className="border-b border-slate-800 hover:bg-slate-800 cursor-pointer transition-colors group"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectLog(log);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Log: ${log.src} → ${log.dst} ${log.app} ${log.action}`}
+                className="border-b border-slate-800 hover:bg-slate-800 cursor-pointer transition-colors group focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500"
               >
                 <td className="p-1 text-slate-500 group-hover:text-white">{log.time}</td>
                 <td className="p-1 text-emerald-400">{log.src}</td>
