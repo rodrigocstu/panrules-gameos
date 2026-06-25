@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Activity, Lock, Globe, Lightbulb, ChevronDown } from 'lucide-react';
+import { Activity, Lock, Globe, Lightbulb, ChevronDown, LayoutGrid } from 'lucide-react';
 
 // Barra lateral: navegación del dashboard + ticket del incidente actual.
-export default function Sidebar({ levelIdx, level }) {
+// `onOpenLevelSelect` abre el selector de niveles (T3.3) durante el juego.
+export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
   // Disclosure de la pista (T2.7): ayuda opcional durante la configuración. Se
   // cierra al cambiar de nivel para no arrastrar la pista del escenario anterior.
   const [showHint, setShowHint] = useState(false);
@@ -31,6 +32,13 @@ export default function Sidebar({ levelIdx, level }) {
           <div className="flex items-center gap-2 text-slate-400 px-3 py-2 hover:text-slate-200 cursor-pointer text-xs whitespace-nowrap">
             <Globe size={14} /> Network
           </div>
+          <button
+            type="button"
+            onClick={onOpenLevelSelect}
+            className="flex items-center gap-2 text-slate-400 px-3 py-2 hover:text-slate-200 cursor-pointer text-xs whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded text-left"
+          >
+            <LayoutGrid size={14} /> Niveles
+          </button>
         </div>
       </div>
 

@@ -126,7 +126,7 @@ export default function FirewallNGFW() {
         />
 
         {/* Center: Visualizer & Editor */}
-        <div className="col-span-10 bg-slate-950 flex flex-col relative">
+        <div className="col-span-12 lg:col-span-10 bg-slate-950 flex flex-col relative">
           <NetworkVisualizer
             level={level}
             gameState={gameState}
