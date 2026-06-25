@@ -89,7 +89,10 @@ export const LEVELS = [
           success: true,
           msg: 'WARNING: You allowed SSH on a non-standard port. It works, but violates security best practice.',
         };
-      return { success: false, msg: 'Configuration mismatch.' };
+      return {
+        success: false,
+        msg: "Service Mismatch: para este escenario el servicio debe ser 'application-default' (fuerza el puerto estándar y DROPea el SSH en 2222) o 'any' (lo permite con aviso).",
+      };
     },
     hint: "Use 'application-default' service to force standard ports. The packet should naturally drop.",
   },

@@ -18,6 +18,7 @@ export default function FirewallNGFW() {
   const [gameState, setGameState] = useState('idle');
   const [logs, setLogs] = useState([]);
   const [selectedLog, setSelectedLog] = useState(null);
+  const [outcome, setOutcome] = useState(null);
 
   // Policy State
   const [ruleName, setRuleName] = useState('Rule-1');
@@ -33,6 +34,9 @@ export default function FirewallNGFW() {
 
   const handleResult = (isWin, reason, effect) => {
     setGameState(isWin ? 'success' : 'failure');
+    // outcome para el overlay (T2.1): acierto que permite vs. acierto que bloquea
+    // vs. fallo. Coherente con el veredicto del motor (effect === finalAction).
+    setOutcome(!isWin ? 'failure' : effect === 'allow' ? 'allow-win' : 'block-win');
     setLogs((prev) => [createLog(level, effect, reason), ...prev]);
   };
 
@@ -83,6 +87,7 @@ export default function FirewallNGFW() {
             <ResultOverlay
               gameState={gameState}
               reason={logs[0]?.reason}
+              outcome={outcome}
               onNext={nextLevel}
               onReconfigure={() => setGameState('idle')}
             />
