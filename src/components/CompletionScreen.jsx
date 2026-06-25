@@ -15,7 +15,14 @@ const TITLE_ID = 'completion-title';
  *   onRepeat       : () => void — reinicia desde el nivel 1.
  *   onSelectLevel  : () => void — abre el selector de niveles.
  */
-export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSelectLevel }) {
+export default function CompletionScreen({
+  totalLevels,
+  attempts,
+  score = 0,
+  bestStreak = 0,
+  onRepeat,
+  onSelectLevel,
+}) {
   const { t } = useI18n();
   const totalAttempts = Object.values(attempts).reduce((sum, n) => sum + n, 0);
 
@@ -50,11 +57,21 @@ export default function CompletionScreen({ totalLevels, attempts, onRepeat, onSe
         {/* Estadísticas */}
         <div className="bg-slate-900/60 rounded-xl p-4 mb-8 space-y-2">
           <div className="flex justify-between text-sm">
+            <span className="text-slate-400">{t('done.stat.score')}</span>
+            <span className="text-amber-400 font-bold">{score}</span>
+          </div>
+          <div className="flex justify-between text-sm">
             <span className="text-slate-400">{t('done.stat.completed')}</span>
             <span className="text-white font-bold">
               {totalLevels} / {totalLevels}
             </span>
           </div>
+          {bestStreak > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">{t('done.stat.streak')}</span>
+              <span className="text-white font-bold">{bestStreak}</span>
+            </div>
+          )}
           {totalAttempts > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">{t('done.stat.attempts')}</span>

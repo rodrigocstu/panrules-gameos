@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useProgress } from '../hooks/useProgress.js';
 
-const STORAGE_KEY = 'palo-rules-game:progress:v1';
+const STORAGE_KEY = 'palo-rules-game:progress:v2';
 
 beforeEach(() => {
   localStorage.clear();
@@ -113,5 +113,67 @@ describe('useProgress — tolerancia a datos corruptos en localStorage', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ foo: 'bar' }));
     const { result } = renderHook(() => useProgress());
     expect(result.current.levelIdx).toBe(0);
+  });
+});
+
+describe('useProgress — puntuación y racha (T3.7)', () => {
+  it('recordResult ganando al primer intento otorga 100 puntos y racha 1', () => {
+    const { result } = renderHook(() => useProgress());
+    act(() => {
+      result.current.recordResult(1, true);
+    });
+    expect(result.current.score).toBe(100);
+    expect(result.current.streak).toBe(1);
+    expect(result.current.bestStreak).toBe(1);
+    expect(result.current.completed.has(1)).toBe(true);
+    expect(result.current.attempts[1]).toBe(1);
+  });
+
+  it('penaliza intentos fallidos previos: fallo + acierto en el mismo nivel = 80 puntos', () => {
+    const { result } = renderHook(() => useProgress());
+    act(() => {
+      result.current.recordResult(1, false); // intento 1: falla -> racha 0
+      result.current.recordResult(1, true); // intento 2: acierta -> 100 - 20
+    });
+    expect(result.current.attempts[1]).toBe(2);
+    expect(result.current.score).toBe(80);
+    expect(result.current.streak).toBe(1);
+  });
+
+  it('la racha sube con aciertos seguidos y se reinicia al fallar; bestStreak se conserva', () => {
+    const { result } = renderHook(() => useProgress());
+    act(() => {
+      result.current.recordResult(1, true);
+      result.current.recordResult(2, true);
+    });
+    expect(result.current.streak).toBe(2);
+    expect(result.current.bestStreak).toBe(2);
+
+    act(() => {
+      result.current.recordResult(3, false);
+    });
+    expect(result.current.streak).toBe(0);
+    expect(result.current.bestStreak).toBe(2);
+  });
+
+  it('rejugar un nivel ya puntuado no vuelve a sumar puntos', () => {
+    const { result } = renderHook(() => useProgress());
+    act(() => {
+      result.current.recordResult(1, true); // +100
+      result.current.recordResult(1, true); // ya puntuado: +0
+    });
+    expect(result.current.score).toBe(100);
+  });
+
+  it('persiste score, streak y bestStreak tras remontar', () => {
+    const { result, unmount } = renderHook(() => useProgress());
+    act(() => {
+      result.current.recordResult(1, true);
+      result.current.recordResult(2, true);
+    });
+    unmount();
+    const { result: result2 } = renderHook(() => useProgress());
+    expect(result2.current.score).toBe(200);
+    expect(result2.current.bestStreak).toBe(2);
   });
 });

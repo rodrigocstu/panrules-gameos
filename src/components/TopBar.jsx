@@ -1,8 +1,8 @@
-import { Shield, Languages } from 'lucide-react';
+import { Shield, Languages, Star, Flame } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
-// Barra superior: marca del simulador + selector de idioma + dispositivo.
-export default function TopBar() {
+// Barra superior: marca del simulador + puntuación + selector de idioma + dispositivo.
+export default function TopBar({ score = 0, streak = 0 }) {
   const { lang, setLang, t } = useI18n();
   const next = lang === 'es' ? 'en' : 'es';
 
@@ -21,6 +21,17 @@ export default function TopBar() {
         </div>
       </div>
       <div className="flex items-center gap-3 lg:gap-6 text-xs font-mono">
+        {/* Puntuación + racha (T3.7) */}
+        <div className="flex items-center gap-2" aria-label={t('score.aria', { score, streak })}>
+          <span className="flex items-center gap-1 text-amber-400 font-bold">
+            <Star size={14} aria-hidden="true" /> {score}
+          </span>
+          {streak > 1 && (
+            <span className="flex items-center gap-1 text-orange-400 font-bold">
+              <Flame size={14} aria-hidden="true" /> {streak}
+            </span>
+          )}
+        </div>
         {/* Selector de idioma (T3.6): cambia ES/EN sin recargar. */}
         <button
           type="button"

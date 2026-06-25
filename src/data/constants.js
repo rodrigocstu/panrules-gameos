@@ -14,6 +14,8 @@ export const APPS = [
   { id: 'ssl', label: 'ssl (HTTPS)' },
   { id: 'ssh', label: 'ssh' },
   { id: 'dns', label: 'dns' },
+  { id: 'ftp', label: 'ftp' },
+  { id: 'ms-rdp', label: 'ms-rdp (RDP)' },
   { id: 'unknown-tcp', label: 'unknown-tcp' },
 ];
 

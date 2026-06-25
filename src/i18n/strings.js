@@ -124,6 +124,8 @@ export const STRINGS = {
     'done.stat.completed': 'Escenarios completados',
     'done.stat.attempts': 'Total de intentos',
     'done.stat.score': 'Puntuación',
+    'done.stat.streak': 'Mejor racha',
+    'score.aria': 'Puntuación {score}, racha {streak}',
     'done.body':
       'Has demostrado dominar la configuración de políticas de seguridad y NAT en PAN-OS. Puedes repetir cualquier escenario para practicar.',
     'done.choose': 'Elegir nivel',
@@ -252,6 +254,8 @@ export const STRINGS = {
     'done.stat.completed': 'Scenarios completed',
     'done.stat.attempts': 'Total attempts',
     'done.stat.score': 'Score',
+    'done.stat.streak': 'Best streak',
+    'score.aria': 'Score {score}, streak {streak}',
     'done.body':
       'You have shown mastery of security policy and NAT configuration in PAN-OS. You can replay any scenario to practice.',
     'done.choose': 'Choose level',

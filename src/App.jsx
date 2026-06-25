@@ -16,9 +16,18 @@ import LevelSelect from './components/LevelSelect.jsx';
 import CompletionScreen from './components/CompletionScreen.jsx';
 
 export default function FirewallNGFW() {
-  // --- Progreso persistido (T3.2) ---
-  const { levelIdx, setLevelIdx, completed, markCompleted, attempts, recordAttempt, reset } =
-    useProgress();
+  // --- Progreso persistido (T3.2) + puntuación (T3.7) ---
+  const {
+    levelIdx,
+    setLevelIdx,
+    completed,
+    attempts,
+    recordResult,
+    score,
+    streak,
+    bestStreak,
+    reset,
+  } = useProgress();
 
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [showLevelSelect, setShowLevelSelect] = useState(false);
@@ -53,11 +62,8 @@ export default function FirewallNGFW() {
     setReasonCode(code ?? null);
     setLogs((prev) => [createLog(level, effect, reason), ...prev]);
 
-    // Registrar intento e, si ganó, marcar nivel completado (T3.2).
-    recordAttempt(level.id);
-    if (isWin) {
-      markCompleted(level.id);
-    }
+    // Registrar intento, completado, puntuación y racha en una transición (T3.7).
+    recordResult(level.id, isWin);
   };
 
   // La animación y sus timers viven en el hook (cleanup garantizado, invariante #7).
@@ -116,7 +122,7 @@ export default function FirewallNGFW() {
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans flex flex-col relative">
       <LogModal log={selectedLog} onClose={() => setSelectedLog(null)} />
 
-      <TopBar />
+      <TopBar score={score} streak={streak} />
 
       <div className="flex-1 grid grid-cols-12 overflow-hidden relative">
         <Sidebar
@@ -194,6 +200,8 @@ export default function FirewallNGFW() {
         <CompletionScreen
           totalLevels={LEVELS.length}
           attempts={attempts}
+          score={score}
+          bestStreak={bestStreak}
           onRepeat={handleRepeat}
           onSelectLevel={() => {
             setShowCompletion(false);
