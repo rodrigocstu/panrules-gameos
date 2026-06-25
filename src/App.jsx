@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { LEVELS } from './data/levels.js';
 import { createLog } from './lib/logs.js';
 import { usePacketAnimation } from './hooks/usePacketAnimation.js';
+import { useProgress } from './hooks/useProgress.js';
 import TopBar from './components/TopBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import NetworkVisualizer from './components/NetworkVisualizer.jsx';
@@ -11,13 +12,21 @@ import TrafficLog from './components/TrafficLog.jsx';
 import LogModal from './components/LogModal.jsx';
 import Onboarding from './components/Onboarding.jsx';
 import CommitButton from './components/CommitButton.jsx';
+import LevelSelect from './components/LevelSelect.jsx';
+import CompletionScreen from './components/CompletionScreen.jsx';
 
 export default function FirewallNGFW() {
-  const [levelIdx, setLevelIdx] = useState(0);
+  // --- Progreso persistido (T3.2) ---
+  const { levelIdx, setLevelIdx, completed, markCompleted, attempts, recordAttempt, reset } =
+    useProgress();
+
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [showLevelSelect, setShowLevelSelect] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
   const [gameState, setGameState] = useState('idle');
   const [logs, setLogs] = useState([]);
   const [selectedLog, setSelectedLog] = useState(null);
+  // outcome: 'allow-win' | 'block-win' | 'failure' | null  (preservado — T2.1)
   const [outcome, setOutcome] = useState(null);
 
   // Policy State
@@ -38,6 +47,12 @@ export default function FirewallNGFW() {
     // vs. fallo. Coherente con el veredicto del motor (effect === finalAction).
     setOutcome(!isWin ? 'failure' : effect === 'allow' ? 'allow-win' : 'block-win');
     setLogs((prev) => [createLog(level, effect, reason), ...prev]);
+
+    // Registrar intento e, si ganó, marcar nivel completado (T3.2).
+    recordAttempt(level.id);
+    if (isWin) {
+      markCompleted(level.id);
+    }
   };
 
   // La animación y sus timers viven en el hook (cleanup garantizado, invariante #7).
@@ -52,19 +67,44 @@ export default function FirewallNGFW() {
     startCommit(level, { srcZone, dstZone, app, service, action, nat: natType, profile });
   };
 
+  // Resetea los campos de la política a sus valores por defecto entre niveles.
+  const resetPolicy = () => {
+    setRuleName('Rule-1');
+    setSrcZone('trust');
+    setDstZone('untrust');
+    setApp('any');
+    setService('application-default');
+    setProfile('none');
+    setAction('ALLOW');
+    setNatType('NONE');
+    resetPacket();
+    setGameState('idle');
+  };
+
+  // Avanza al siguiente nivel o muestra la pantalla de finalización (T3.3).
   const nextLevel = () => {
     if (levelIdx < LEVELS.length - 1) {
-      setLevelIdx((prev) => prev + 1);
-      setGameState('idle');
-      setAction('ALLOW');
-      setNatType('NONE');
-      setApp('any');
-      setProfile('none');
-      resetPacket();
+      setLevelIdx(levelIdx + 1);
+      resetPolicy();
     } else {
-      alert('PCNSE Certification Achieved! All scenarios complete.');
-      setLevelIdx(0);
+      // Último nivel superado: mostrar CompletionScreen en lugar de alert().
+      setShowCompletion(true);
     }
+  };
+
+  // Navega a un nivel específico desde LevelSelect (T3.3).
+  const handleSelectLevel = (idx) => {
+    setLevelIdx(idx);
+    resetPolicy();
+    setShowCompletion(false);
+  };
+
+  // Reinicia el juego completo desde CompletionScreen.
+  const handleRepeat = () => {
+    reset();
+    resetPolicy();
+    setShowCompletion(false);
+    setLogs([]);
   };
 
   return (
@@ -74,7 +114,11 @@ export default function FirewallNGFW() {
       <TopBar />
 
       <div className="flex-1 grid grid-cols-12 overflow-hidden relative">
-        <Sidebar levelIdx={levelIdx} level={level} />
+        <Sidebar
+          levelIdx={levelIdx}
+          level={level}
+          onOpenLevelSelect={() => setShowLevelSelect(true)}
+        />
 
         {/* Center: Visualizer & Editor */}
         <div className="col-span-10 bg-slate-950 flex flex-col relative">
@@ -123,6 +167,31 @@ export default function FirewallNGFW() {
       </div>
 
       <Onboarding show={showOnboarding} onClose={() => setShowOnboarding(false)} />
+
+      {/* Selector de niveles (T3.3) */}
+      {showLevelSelect && (
+        <LevelSelect
+          levels={LEVELS}
+          currentIdx={levelIdx}
+          completed={completed}
+          attempts={attempts}
+          onSelect={handleSelectLevel}
+          onClose={() => setShowLevelSelect(false)}
+        />
+      )}
+
+      {/* Pantalla de finalización — reemplaza el alert() eliminado (T3.3) */}
+      {showCompletion && (
+        <CompletionScreen
+          totalLevels={LEVELS.length}
+          attempts={attempts}
+          onRepeat={handleRepeat}
+          onSelectLevel={() => {
+            setShowCompletion(false);
+            setShowLevelSelect(true);
+          }}
+        />
+      )}
     </div>
   );
 }
