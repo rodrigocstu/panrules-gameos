@@ -90,7 +90,9 @@ export function evaluate(config, level) {
     };
   }
 
-  // 2. Cadena de validación genérica (orden de prioridad PAN-OS).
+  // 2. SECURITY RULEBASE (orden de prioridad PAN-OS). NAT NO se evalúa aquí: en
+  //    PAN-OS real es un rulebase aparte (T2.6). Estos checks son SOLO de Security
+  //    Policy: zona, App-ID, service, acción y perfil de seguridad.
   let resultMsg = '';
   let reasonCode = '';
 
@@ -112,9 +114,6 @@ export function evaluate(config, level) {
   } else if (action !== solution.action) {
     resultMsg = 'Action Mismatch';
     reasonCode = 'ACTION_MISMATCH';
-  } else if (action === 'ALLOW' && nat !== solution.nat) {
-    resultMsg = 'NAT Mismatch';
-    reasonCode = 'NAT_MISMATCH';
   } else {
     // T2.5: semántica de perfil "al menos X". solution.profile === 'any' => el
     // perfil es irrelevante (nivel 5: la regla DENY no inspecciona).
@@ -125,7 +124,22 @@ export function evaluate(config, level) {
     }
   }
 
-  // 3. Veredicto final.
+  // 3. NAT RULEBASE — paso SEPARADO (T2.6). Solo se evalúa si la Security Policy
+  //    pasó: en PAN-OS el NAT rulebase es una tabla distinta y el jugador la
+  //    configura aparte de la regla de Security. Validar aquí mantiene los dos
+  //    veredictos conceptualmente distintos: se puede acertar Security pero fallar
+  //    NAT, y el mensaje dice explícitamente cuál rulebase falló.
+  //    Solo aplica cuando el tráfico se PERMITE: una regla DENY descarta el
+  //    paquete en Security y nunca alcanza el NAT rulebase.
+  if (!reasonCode && solution.action === 'ALLOW') {
+    const natResult = checkNat(nat, solution.nat);
+    if (natResult) {
+      resultMsg = natResult.msg;
+      reasonCode = natResult.code;
+    }
+  }
+
+  // 4. Veredicto final.
   if (!reasonCode) {
     // T2.1: el desenlace se deriva de la acción de la solución, no está
     // hardcodeado. Un DENY correcto BLOQUEA (block-win), un ALLOW correcto pasa.
@@ -182,5 +196,50 @@ function checkProfile(action, profile, required) {
   return {
     msg: `Perfil insuficiente: '${profile}' no cubre la inspección requerida. Se necesita al menos '${required}'.`,
     code: 'PROFILE_INSUFFICIENT',
+  };
+}
+
+// Etiquetas legibles de cada tipo de NAT para los mensajes del NAT rulebase.
+const NAT_LABEL = {
+  NONE: 'sin NAT (No NAT)',
+  SNAT: 'Source NAT (SNAT)',
+  DNAT: 'Destination NAT (DNAT)',
+  'DNAT+SNAT': 'U-Turn NAT (DNAT+SNAT)',
+};
+
+/**
+ * Valida la regla del NAT RULEBASE de forma SEPARADA a la Security Policy (T2.6).
+ * En PAN-OS el NAT es una tabla distinta; este check evalúa solo si el tipo de
+ * NAT configurado coincide con el que el escenario requiere. Devuelve null si es
+ * correcto, o `{ msg, code }` describiendo el fallo en términos del NAT rulebase.
+ *
+ * @param {string} nat       tipo de NAT elegido por el jugador en el NAT editor
+ * @param {string} required  solution.nat ('NONE'|'SNAT'|'DNAT'|'DNAT+SNAT')
+ */
+function checkNat(nat, required) {
+  if (nat === required) return null;
+
+  const want = NAT_LABEL[required] ?? required;
+  const have = NAT_LABEL[nat] ?? nat;
+
+  // Caso especial pedagógico: falta NAT por completo donde se necesitaba.
+  if (required !== 'NONE' && nat === 'NONE') {
+    return {
+      msg: `NAT Rulebase: falta la regla de NAT. La Security Policy es correcta, pero este tráfico necesita ${want} en el NAT rulebase (una tabla aparte de Security en PAN-OS).`,
+      code: 'NAT_MISMATCH',
+    };
+  }
+
+  // Caso especial: se aplicó NAT donde no debía (tráfico interno sin traducción).
+  if (required === 'NONE' && nat !== 'NONE') {
+    return {
+      msg: `NAT Rulebase: este tráfico no debe traducirse. Configuraste ${have}, pero la regla correcta es ${want}. El NAT rulebase es independiente de la Security Policy en PAN-OS.`,
+      code: 'NAT_MISMATCH',
+    };
+  }
+
+  return {
+    msg: `NAT Rulebase: tipo de NAT incorrecto. Se esperaba ${want}, no ${have}. Recuerda que el NAT se configura en su propio rulebase, separado de la Security Policy.`,
+    code: 'NAT_MISMATCH',
   };
 }

@@ -4,7 +4,9 @@ import { LEVELS } from '../data/levels.js';
 
 // Niveles reales del juego (extraídos a src/data/levels.js en WP-2 / T1.1).
 const level1 = LEVELS[0]; // Secure Internet Access (ALLOW + SNAT)
+const level2 = LEVELS[1]; // Publishing DMZ Web Server (ALLOW + DNAT)
 const level3 = LEVELS[2]; // Block Non-Standard SSH (specialCheck)
+const level4 = LEVELS[3]; // The Hairpin / U-Turn NAT (ALLOW + DNAT+SNAT)
 const level5 = LEVELS[4]; // Data Exfiltration Attempt (DENY)
 
 // Helper: construye una config a partir de la solución del nivel (+ overrides).
@@ -46,10 +48,11 @@ describe('evaluate() — mismatches (nivel 1)', () => {
     expect(verdict.resultMsg).toBe('Zone Mismatch');
   });
 
-  it('marca NAT Mismatch si falta el SNAT', () => {
+  it('marca NAT_MISMATCH si falta el SNAT (mensaje del NAT rulebase)', () => {
     const verdict = evaluate({ ...correctLevel1Config, nat: 'NONE' }, level1);
     expect(verdict.isWin).toBe(false);
-    expect(verdict.resultMsg).toBe('NAT Mismatch');
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/NAT Rulebase/i);
   });
 });
 
@@ -183,5 +186,79 @@ describe('evaluate() — T2.5: semántica de perfil "al menos X"', () => {
     const verdict = evaluate(configFrom(level5, { profile: 'none' }), level5);
     expect(verdict.isWin).toBe(true);
     expect(verdict.outcome).toBe('block-win');
+  });
+});
+
+describe('evaluate() — T2.6: NAT rulebase validado por separado de Security', () => {
+  // El NAT rulebase es una tabla aparte en PAN-OS. Un jugador puede acertar TODA
+  // la Security Policy y aun así fallar el NAT, y viceversa. Estos tests aíslan
+  // ese caso: Security correcta-pero-NAT-incorrecta, y NAT correcto.
+
+  it('nivel 1 (SNAT): Security correcta pero NAT NONE => FALLA en el NAT rulebase', () => {
+    // Todos los campos de Security son correctos; solo el NAT está mal.
+    const verdict = evaluate(configFrom(level1, { nat: 'NONE' }), level1);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    // El mensaje deja claro que falló el NAT rulebase, no la Security Policy.
+    expect(verdict.resultMsg).toMatch(/NAT Rulebase/i);
+    expect(verdict.resultMsg).toMatch(/SNAT/);
+  });
+
+  it('nivel 1 (SNAT): Security + NAT correctos => ACIERTA (allow-win)', () => {
+    const verdict = evaluate(configFrom(level1), level1);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+    expect(verdict.outcome).toBe('allow-win');
+  });
+
+  it('nivel 2 (DNAT): Security correcta pero NAT SNAT => FALLA con tipo incorrecto', () => {
+    const verdict = evaluate(configFrom(level2, { nat: 'SNAT' }), level2);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/DNAT/);
+  });
+
+  it('nivel 2 (DNAT): Security + NAT correctos => ACIERTA', () => {
+    const verdict = evaluate(configFrom(level2), level2);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('nivel 4 (U-Turn): Security correcta pero solo DNAT => FALLA (falta el SNAT del U-Turn)', () => {
+    const verdict = evaluate(configFrom(level4, { nat: 'DNAT' }), level4);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/U-Turn|DNAT\+SNAT/i);
+  });
+
+  it('nivel 4 (U-Turn): Security + NAT (DNAT+SNAT) correctos => ACIERTA', () => {
+    const verdict = evaluate(configFrom(level4), level4);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('la validación de NAT corre DESPUÉS de Security: un fallo de zona se reporta antes que el NAT', () => {
+    // Zona incorrecta Y NAT incorrecto: debe ganar el check de Security (zona).
+    const verdict = evaluate(configFrom(level1, { dstZone: 'dmz', nat: 'NONE' }), level1);
+    expect(verdict.reasonCode).toBe('ZONE_MISMATCH');
+  });
+
+  it('nivel 5 (DENY): el NAT rulebase NO se evalúa (el paquete se bloquea en Security)', () => {
+    // Aunque el jugador ponga un NAT "incorrecto", una solución DENY nunca llega
+    // al NAT rulebase: el veredicto es el bloqueo correcto.
+    const verdict = evaluate(configFrom(level5, { nat: 'SNAT' }), level5);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('nivel 3 (NONE): aplicar NAT donde no debe => FALLA explicando que no debe traducirse', () => {
+    // Nivel 3 tiene specialCheck; lo sorteamos con un nivel derivado sin él para
+    // probar el check de NAT NONE de forma aislada.
+    const plainLevel3 = { ...level3, specialCheck: undefined };
+    const verdict = evaluate(configFrom(plainLevel3, { nat: 'SNAT' }), plainLevel3);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/no debe traducirse/i);
   });
 });

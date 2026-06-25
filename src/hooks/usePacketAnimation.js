@@ -104,22 +104,26 @@ export function usePacketAnimation({ onPhase, onResult }) {
       }, 500)
     );
 
-    // 3. Procesar y TRANSFORMAR (NAT visual), luego evaluar.
+    // 3. Procesar y TRANSFORMAR (NAT visual), luego evaluar. Las etiquetas de IP
+    //    se DERIVAN del nivel (level.nat), ya no están hardcodeadas (T2.6). El
+    //    color sigue codificando el tipo de NAT; la etiqueta viene del rulebase
+    //    NAT del escenario (level.nat.packetLabel).
     track(
       setTimeout(() => {
         let nextColor = 'bg-yellow-400';
         let nextLabel = level.packet.srcIp;
+        const natData = level.nat;
 
         if (config.action === 'ALLOW') {
           if (config.nat === 'SNAT') {
             nextColor = 'bg-orange-500';
-            nextLabel = 'NAT: 203.0.113.1';
+            nextLabel = natData?.packetLabel ?? `SNAT: ${natData?.source?.translated ?? ''}`;
           } else if (config.nat === 'DNAT') {
             nextColor = 'bg-purple-500';
-            nextLabel = `NAT: ${level.packet.srcIp}`;
+            nextLabel = natData?.packetLabel ?? `DNAT: ${natData?.destination?.translated ?? ''}`;
           } else if (config.nat === 'DNAT+SNAT') {
             nextColor = 'bg-purple-500 border-2 border-orange-500';
-            nextLabel = 'U-TURN NAT';
+            nextLabel = natData?.packetLabel ?? 'U-TURN NAT';
           }
         }
 

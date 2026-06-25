@@ -140,6 +140,7 @@ export default function FirewallNGFW() {
           {/* --- EDITOR --- */}
           <div className="h-1/2 flex flex-col bg-slate-900">
             <PolicyEditor
+              level={level}
               ruleName={ruleName}
               setRuleName={setRuleName}
               srcZone={srcZone}
