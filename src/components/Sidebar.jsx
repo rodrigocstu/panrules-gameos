@@ -6,7 +6,7 @@ import { LEVELS } from '../data/levels';
 // Barra lateral: navegación del dashboard + ticket del incidente actual.
 // `onOpenLevelSelect` abre el selector de niveles (T3.3) durante el juego.
 // `completed` (Set<number>) habilita la barra de progreso por cert track.
-export default function Sidebar({ levelIdx, level, onOpenLevelSelect, completed }) {
+export default function Sidebar({ levelIdx, level, onOpenLevelSelect, completed, style }) {
   const { lang, t } = useI18n();
   // Disclosure de la pista (T2.7): ayuda opcional durante la configuración. Se
   // cierra al cambiar de nivel para no arrastrar la pista del escenario anterior.
@@ -31,15 +31,16 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect, completed 
   const architectDone = architectLevels.filter((l) => safeCompleted.has(l.id)).length;
 
   return (
-    // sm: ocupa ancho completo como banda horizontal (flex-row).
-    // lg: vuelve al carril lateral (col-span-2, flex-col).
-    <div className="col-span-12 lg:col-span-2 bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-row lg:flex-col py-2 lg:py-4 z-40 gap-4 lg:gap-0 px-4 lg:px-0 overflow-x-auto lg:overflow-x-visible">
+    <div
+      className="bg-slate-900 border-r border-slate-800 flex flex-col py-4 z-40 overflow-y-auto shrink-0"
+      style={style}
+    >
       {/* Sección de navegación */}
-      <div className="lg:px-4 lg:mb-6 shrink-0 lg:shrink">
-        <div className="text-xs font-bold text-slate-500 mb-1 lg:mb-2 uppercase tracking-wider hidden lg:block">
+      <div className="px-4 mb-6 shrink-0">
+        <div className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">
           {t('side.dashboard')}
         </div>
-        <div className="flex flex-row lg:flex-col gap-1">
+        <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-slate-300 bg-slate-800 px-3 py-2 rounded cursor-pointer border-l-2 border-orange-500 text-xs whitespace-nowrap">
             <Activity size={14} /> {t('side.monitor')}
           </div>
@@ -60,7 +61,7 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect, completed 
       </div>
 
       {/* Ticket del incidente */}
-      <div className="lg:px-4 lg:mt-auto flex-1 lg:flex-none min-w-[200px] lg:min-w-0">
+      <div className="px-4 mt-auto">
         <div className="bg-slate-800 rounded p-3 border border-slate-700">
           <h3 className="text-xs font-bold text-orange-500 mb-1">
             {t('side.incident')} #{2040 + levelIdx}
@@ -110,7 +111,7 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect, completed 
 
         {/* Progreso por cert track (compacto, solo en lg) */}
         {(showNgfw || showArchitect) && (
-          <div className="hidden lg:block mt-2 bg-slate-800/60 rounded p-2 border border-slate-700/50 space-y-2">
+          <div className="mt-2 bg-slate-800/60 rounded p-2 border border-slate-700/50 space-y-2">
             {showNgfw && (
               <div>
                 <div className="flex justify-between text-xs text-slate-500 mb-0.5">

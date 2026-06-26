@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { LEVELS } from './data/levels';
 import { createLog } from './lib/logs';
 import { usePacketAnimation } from './hooks/usePacketAnimation.js';
 import { useProgress } from './hooks/useProgress.js';
+import { useDragResize } from './hooks/useDragResize.js';
 import { evaluateOrdered } from './lib/firewall-engine';
 import TopBar from './components/TopBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
@@ -16,8 +17,41 @@ import Onboarding from './components/Onboarding.jsx';
 import CommitButton from './components/CommitButton.jsx';
 import LevelSelect from './components/LevelSelect.jsx';
 import CompletionScreen from './components/CompletionScreen.jsx';
+import ResizeHandle from './components/ResizeHandle.jsx';
 
 export default function FirewallNGFW() {
+  // --- Layout redimensionable: ancho del sidebar, alto del visualizador, alto del log ---
+  const [sidebarW, onSidebarDrag] = useDragResize({
+    axis: 'horizontal',
+    defaultSize: 200,
+    minSize: 140,
+    maxSize: 360,
+    storageKey: 'sidebar',
+  });
+  const [vizH, onVizDrag, setVizH] = useDragResize({
+    axis: 'vertical',
+    defaultSize: null, // se inicializa desde DOM en useEffect
+    minSize: 180,
+    maxSize: null,
+    storageKey: 'viz',
+  });
+  const [logH, onLogDrag] = useDragResize({
+    axis: 'vertical',
+    defaultSize: 128,
+    minSize: 72,
+    maxSize: 280,
+    storageKey: 'log',
+  });
+  // Ref del contenedor central para capturar altura inicial del visualizador.
+  const centerRef = useRef(null);
+  useEffect(() => {
+    if (vizH === null && centerRef.current) {
+      setVizH(Math.floor(centerRef.current.clientHeight * 0.5));
+    }
+    // Solo al montar; setVizH es estable por useState.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // --- Progreso persistido (T3.2) + puntuación (T3.7) ---
   const {
     levelIdx,
@@ -138,21 +172,30 @@ export default function FirewallNGFW() {
 
       <TopBar score={score} streak={streak} />
 
-      <div className="flex-1 grid grid-cols-12 overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Sidebar redimensionable — H1 */}
         <Sidebar
           levelIdx={levelIdx}
           level={level}
           onOpenLevelSelect={() => setShowLevelSelect(true)}
           completed={completed}
+          style={{ width: sidebarW }}
         />
+        <ResizeHandle axis="horizontal" onMouseDown={onSidebarDrag} />
 
-        {/* Center: Visualizer & Editor */}
-        <div className="col-span-12 lg:col-span-10 bg-slate-950 flex flex-col relative">
+        {/* Centro: Visualizador + Editor (flex-col) */}
+        <div ref={centerRef} className="flex-1 min-w-0 bg-slate-950 flex flex-col">
+          {/* Visualizador — altura dinámica */}
           <NetworkVisualizer
             level={level}
             gameState={gameState}
             commitProgress={commitProgress}
             packetCoords={packetCoords}
+            style={
+              vizH !== null
+                ? { height: vizH, flexShrink: 0 }
+                : { flex: 1, minHeight: 180 }
+            }
           >
             <ResultOverlay
               gameState={gameState}
@@ -166,41 +209,53 @@ export default function FirewallNGFW() {
             />
           </NetworkVisualizer>
 
-          {/* --- EDITOR --- */}
-          <div className="h-1/2 flex flex-col bg-slate-900">
-            {isMultiRule ? (
-              <MultiRuleEditor
-                rules={multiRules}
-                setRules={setMultiRules}
-                disabled={gameState !== 'idle'}
-              />
-            ) : (
-              <PolicyEditor
-                level={level}
-                ruleName={ruleName}
-                setRuleName={setRuleName}
-                srcZone={srcZone}
-                setSrcZone={setSrcZone}
-                dstZone={dstZone}
-                setDstZone={setDstZone}
-                app={app}
-                setApp={setApp}
-                service={service}
-                setService={setService}
-                action={action}
-                setAction={setAction}
-                profile={profile}
-                setProfile={setProfile}
-                natType={natType}
-                setNatType={setNatType}
-                disabled={gameState !== 'idle'}
-              />
-            )}
+          {/* H2: entre Visualizador y Editor */}
+          <ResizeHandle axis="vertical" onMouseDown={onVizDrag} />
 
-            <TrafficLog logs={logs} onSelectLog={setSelectedLog} />
+          {/* Editor + Log (ocupa el resto) */}
+          <div className="flex-1 min-h-0 flex flex-col bg-slate-900">
+            {/* Editor — ocupa espacio restante; CommitButton flota aquí */}
+            <div className="flex-1 min-h-0 relative overflow-hidden">
+              {isMultiRule ? (
+                <MultiRuleEditor
+                  rules={multiRules}
+                  setRules={setMultiRules}
+                  disabled={gameState !== 'idle'}
+                />
+              ) : (
+                <PolicyEditor
+                  level={level}
+                  ruleName={ruleName}
+                  setRuleName={setRuleName}
+                  srcZone={srcZone}
+                  setSrcZone={setSrcZone}
+                  dstZone={dstZone}
+                  setDstZone={setDstZone}
+                  app={app}
+                  setApp={setApp}
+                  service={service}
+                  setService={setService}
+                  action={action}
+                  setAction={setAction}
+                  profile={profile}
+                  setProfile={setProfile}
+                  natType={natType}
+                  setNatType={setNatType}
+                  disabled={gameState !== 'idle'}
+                />
+              )}
+              <CommitButton gameState={gameState} onCommit={commitPolicy} />
+            </div>
+
+            {/* H3: entre Editor y TrafficLog */}
+            <ResizeHandle axis="vertical" onMouseDown={onLogDrag} />
+
+            <TrafficLog
+              logs={logs}
+              onSelectLog={setSelectedLog}
+              style={{ height: logH }}
+            />
           </div>
-
-          <CommitButton gameState={gameState} onCommit={commitPolicy} />
         </div>
       </div>
 

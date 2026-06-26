@@ -5,7 +5,7 @@ import { useI18n } from '../i18n/I18nContext.jsx';
 export default function CommitButton({ gameState, onCommit }) {
   const { t } = useI18n();
   return (
-    <div className="absolute bottom-36 right-4 lg:right-6 z-50">
+    <div className="absolute bottom-4 right-4 lg:right-6 z-50">
       <button
         onClick={onCommit}
         disabled={gameState !== 'idle'}

@@ -7,11 +7,14 @@ export default function NetworkVisualizer({
   gameState,
   commitProgress,
   packetCoords,
+  style,
   children,
 }) {
   return (
-    // En móvil: altura mínima fija en lugar de h-1/2 (que se colapsa sin altura padre).
-    <div className="min-h-[280px] lg:h-1/2 border-b border-slate-800 relative bg-[#0B1120] overflow-hidden p-4 lg:p-8">
+    <div
+      className="border-b border-slate-800 relative bg-[#0B1120] overflow-hidden p-4 lg:p-8"
+      style={style}
+    >
       {/* Background Grid Pattern */}
       <div
         className="absolute inset-0 opacity-10"

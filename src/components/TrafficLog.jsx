@@ -2,10 +2,10 @@ import { Eye } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
 // Panel inferior de registros de tráfico. Cada fila abre el detalle (onSelectLog).
-export default function TrafficLog({ logs, onSelectLog }) {
+export default function TrafficLog({ logs, onSelectLog, style }) {
   const { t } = useI18n();
   return (
-    <div className="h-32 bg-slate-950 border-t border-slate-800 flex flex-col">
+    <div className="bg-slate-950 border-t border-slate-800 flex flex-col shrink-0" style={style}>
       <div className="px-3 py-1 bg-slate-900 text-xs text-slate-400 font-bold border-b border-slate-800">
         {t('log.title')}
       </div>
