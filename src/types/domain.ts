@@ -178,6 +178,10 @@ export interface PolicyConfig {
   action: Action;
   nat: NatType;
   profile: ProfileId;
+  // Campos opcionales v2: address objects y profile groups (backward-compat).
+  srcAddress?: string;
+  dstAddress?: string;
+  profileGroup?: SecurityProfileGroup;
 }
 
 // Un escenario ("ticket") del juego.
@@ -230,8 +234,12 @@ export interface Verdict {
 }
 
 // ─── Policy-Order Engine ──────────────────────────────────────────────────────
-export interface PolicyRule extends PolicyConfig {
+export interface PolicyRule extends Omit<PolicyConfig, 'srcZone' | 'dstZone'> {
   id: string;
+  // Las zonas en una PolicyRule pueden ser 'any' (wildcard) o una zona específica.
+  // PolicyConfig usa ZoneId (sin 'any') porque el jugador siempre elige una zona concreta.
+  srcZone: ZoneId | 'any';
+  dstZone: ZoneId | 'any';
   disabled?: boolean;
   description?: LocalizedText;
 }
