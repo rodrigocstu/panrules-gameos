@@ -175,7 +175,7 @@ export const LEVELS: Level[] = [
     },
     packet: {
       srcZone: 'trust',
-      dstZone: 'untrust',
+      dstZone: 'dmz',
       srcIp: '10.1.1.50',
       dstIp: '203.0.113.1',
       proto: 'TCP/80',
@@ -183,7 +183,7 @@ export const LEVELS: Level[] = [
     },
     solution: {
       srcZone: 'trust',
-      dstZone: 'untrust',
+      dstZone: 'dmz',
       app: 'web-browsing',
       service: 'application-default',
       action: 'ALLOW',
@@ -421,7 +421,7 @@ export const LEVELS: Level[] = [
     },
     packet: {
       srcZone: 'trust',
-      dstZone: 'untrust',
+      dstZone: 'dmz',
       srcIp: '10.1.1.60',
       dstIp: '203.0.113.2',
       proto: 'TCP/3389',
@@ -429,7 +429,7 @@ export const LEVELS: Level[] = [
     },
     solution: {
       srcZone: 'trust',
-      dstZone: 'untrust',
+      dstZone: 'dmz',
       app: 'ms-rdp',
       service: 'application-default',
       action: 'ALLOW',
@@ -637,13 +637,13 @@ export const LEVELS: Level[] = [
       en: 'One zone covers multiple interfaces',
     },
     desc: {
-      es: 'La empresa tiene dos interfaces en la zona Trust: ethernet1/1 (LAN principal, 10.1.1.0/24) y ethernet1/2 (WiFi corporativa, 10.1.2.0/24). El tráfico desde WiFi (10.1.1.200) hacia el servidor web de DMZ debe pasar. ¿Necesitas una regla separada para WiFi?',
-      en: 'The company has two interfaces in the Trust zone: ethernet1/1 (main LAN, 10.1.1.0/24) and ethernet1/2 (corporate WiFi, 10.1.2.0/24). Traffic from WiFi (10.1.1.200) to the DMZ web server must pass. Do you need a separate rule for WiFi?',
+      es: 'La empresa tiene dos interfaces en la zona Trust: ethernet1/1 (LAN principal, 10.1.1.0/24) y ethernet1/2 (WiFi corporativa, 10.1.2.0/24). El tráfico desde WiFi (10.1.2.200) hacia el servidor web de DMZ debe pasar. ¿Necesitas una regla separada para WiFi?',
+      en: 'The company has two interfaces in the Trust zone: ethernet1/1 (main LAN, 10.1.1.0/24) and ethernet1/2 (corporate WiFi, 10.1.2.0/24). Traffic from WiFi (10.1.2.200) to the DMZ web server must pass. Do you need a separate rule for WiFi?',
     },
     packet: {
       srcZone: 'trust',
       dstZone: 'dmz',
-      srcIp: '10.1.1.200',
+      srcIp: '10.1.2.200',
       dstIp: '192.168.50.10',
       proto: 'TCP/80',
       app: 'web-browsing',
@@ -659,9 +659,9 @@ export const LEVELS: Level[] = [
     },
     nat: {
       type: 'NONE',
-      source: { original: '10.1.1.200', translated: '10.1.1.200' },
+      source: { original: '10.1.2.200', translated: '10.1.2.200' },
       destination: { original: '192.168.50.10', translated: '192.168.50.10' },
-      packetLabel: '10.1.1.200',
+      packetLabel: '10.1.2.200',
     },
     hint: {
       es: 'En PAN-OS, la política de seguridad opera sobre ZONAS, no sobre interfaces individuales. Una zona puede contener múltiples interfaces físicas o lógicas. Una sola regla Trust→DMZ aplica automáticamente a todo el tráfico que viene de CUALQUIER interfaz asignada a la zona Trust, sin importar cuántas interfaces tenga esa zona.',
@@ -1247,8 +1247,8 @@ export const LEVELS: Level[] = [
       en: 'Application Filter: blocking social media by category',
     },
     desc: {
-      es: 'La política corporativa bloquea todas las aplicaciones de redes sociales desde la red de empleados. En lugar de listar facebook, instagram, twitter, tiktok individualmente (y actualizar cuando surja una nueva), se usa un Application Filter de categoría "social-networking" que se actualiza automáticamente cuando PAN-OS publica nuevas App-IDs.',
-      en: 'Corporate policy blocks all social networking applications from the employee network. Instead of listing facebook, instagram, twitter, tiktok individually (and updating when a new one emerges), an Application Filter for category "social-networking" is used that automatically updates when PAN-OS publishes new App-IDs.',
+      es: 'Un empleado intenta acceder a una red social (Facebook, 31.13.66.35) por HTTPS; el firewall observa el tráfico como App-ID "ssl" y la política corporativa debe bloquearlo. En producción, en lugar de listar facebook, instagram, twitter o tiktok una por una (y actualizar cuando surja una nueva), se usa un Application Filter de categoría "social-networking" que se actualiza automáticamente cuando PAN-OS publica nuevas App-IDs.',
+      en: 'An employee tries to reach a social network (Facebook, 31.13.66.35) over HTTPS; the firewall observes the traffic as App-ID "ssl" and corporate policy must block it. In production, instead of listing facebook, instagram, twitter or tiktok one by one (and updating when a new one emerges), an Application Filter for the "social-networking" category is used that automatically updates when PAN-OS publishes new App-IDs.',
     },
     packet: {
       srcZone: 'trust',
