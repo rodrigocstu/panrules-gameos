@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Activity, Lock, Globe, Lightbulb, ChevronDown, LayoutGrid } from 'lucide-react';
 import { useI18n, pickText } from '../i18n/I18nContext.jsx';
+import { LEVELS } from '../data/levels';
 
 // Barra lateral: navegación del dashboard + ticket del incidente actual.
 // `onOpenLevelSelect` abre el selector de niveles (T3.3) durante el juego.
-export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
+// `completed` (Set<number>) habilita la barra de progreso por cert track.
+export default function Sidebar({ levelIdx, level, onOpenLevelSelect, completed }) {
   const { lang, t } = useI18n();
   // Disclosure de la pista (T2.7): ayuda opcional durante la configuración. Se
   // cierra al cambiar de nivel para no arrastrar la pista del escenario anterior.
@@ -15,6 +17,18 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
 
   const hintPanelId = 'sidebar-hint-panel';
   const hint = pickText(level.hint, lang);
+
+  // Calcular progreso del track del nivel actual
+  const currentTracks = level.tracks ?? [];
+  const showNgfw = currentTracks.includes('ngfw-engineer') || level.tier === 'F';
+  const showArchitect = currentTracks.includes('netsec-architect') || level.tier === 'A';
+
+  const ngfwLevels = LEVELS.filter((l) => l.tracks && l.tracks.includes('ngfw-engineer'));
+  const architectLevels = LEVELS.filter((l) => l.tracks && l.tracks.includes('netsec-architect'));
+
+  const safeCompleted = completed ?? new Set();
+  const ngfwDone = ngfwLevels.filter((l) => safeCompleted.has(l.id)).length;
+  const architectDone = architectLevels.filter((l) => safeCompleted.has(l.id)).length;
 
   return (
     // sm: ocupa ancho completo como banda horizontal (flex-row).
@@ -93,6 +107,47 @@ export default function Sidebar({ levelIdx, level, onOpenLevelSelect }) {
             </div>
           )}
         </div>
+
+        {/* Progreso por cert track (compacto, solo en lg) */}
+        {(showNgfw || showArchitect) && (
+          <div className="hidden lg:block mt-2 bg-slate-800/60 rounded p-2 border border-slate-700/50 space-y-2">
+            {showNgfw && (
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-0.5">
+                  <span>{t('progress.ngfw', { done: ngfwDone, total: ngfwLevels.length })}</span>
+                </div>
+                <div className="bg-slate-700 rounded-full h-1">
+                  <div
+                    className="bg-emerald-500 h-1 rounded-full transition-all"
+                    style={{
+                      width: `${ngfwLevels.length > 0 ? (ngfwDone / ngfwLevels.length) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {showArchitect && (
+              <div>
+                <div className="flex justify-between text-xs text-slate-500 mb-0.5">
+                  <span>
+                    {t('progress.architect', {
+                      done: architectDone,
+                      total: architectLevels.length,
+                    })}
+                  </span>
+                </div>
+                <div className="bg-slate-700 rounded-full h-1">
+                  <div
+                    className="bg-yellow-500 h-1 rounded-full transition-all"
+                    style={{
+                      width: `${architectLevels.length > 0 ? (architectDone / architectLevels.length) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

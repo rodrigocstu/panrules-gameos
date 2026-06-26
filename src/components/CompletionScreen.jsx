@@ -10,13 +10,19 @@ const TITLE_ID = 'completion-title';
  * volver al selector de nivel.
  *
  * Props:
- *   totalLevels    : number   — cantidad total de escenarios.
+ *   levels         : Level[]           — todos los niveles (para calcular badges).
+ *   totalLevels    : number            — cantidad total de escenarios.
+ *   completed      : Set<number>       — ids de niveles completados.
  *   attempts       : Record<number, number> — intentos por id de nivel.
- *   onRepeat       : () => void — reinicia desde el nivel 1.
- *   onSelectLevel  : () => void — abre el selector de niveles.
+ *   score          : number
+ *   bestStreak     : number
+ *   onRepeat       : () => void        — reinicia desde el nivel 1.
+ *   onSelectLevel  : () => void        — abre el selector de niveles.
  */
 export default function CompletionScreen({
+  levels = [],
   totalLevels,
+  completed,
   attempts,
   score = 0,
   bestStreak = 0,
@@ -29,6 +35,23 @@ export default function CompletionScreen({
   // No hay cierre explícito en este modal; usamos onSelectLevel como escape.
   const { containerRef } = useModalA11y(true, onSelectLevel);
 
+  // Calcular progreso por track
+  const ngfwLevels = levels.filter(
+    (l) => l.tracks && l.tracks.includes('ngfw-engineer')
+  );
+  const architectLevels = levels.filter(
+    (l) => l.tracks && l.tracks.includes('netsec-architect')
+  );
+
+  const ngfwDone = ngfwLevels.filter((l) => completed && completed.has(l.id)).length;
+  const architectDone = architectLevels.filter((l) => completed && completed.has(l.id)).length;
+
+  const ngfwTotal = ngfwLevels.length;
+  const architectTotal = architectLevels.length;
+
+  const hasNgfwBadge = ngfwTotal > 0 && ngfwDone >= ngfwTotal;
+  const hasArchitectBadge = architectTotal > 0 && architectDone >= architectTotal;
+
   return (
     <div
       className="fixed inset-0 z-[120] bg-slate-950/95 backdrop-blur-md flex items-center justify-center animate-in fade-in zoom-in duration-300"
@@ -38,7 +61,7 @@ export default function CompletionScreen({
     >
       <div
         ref={containerRef}
-        className="bg-slate-800 border border-yellow-500 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center"
+        className="bg-slate-800 border border-yellow-500 rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center overflow-y-auto max-h-[90vh]"
         tabIndex={-1}
       >
         {/* Ícono principal */}
@@ -54,8 +77,24 @@ export default function CompletionScreen({
         </h2>
         <p className="text-yellow-400 font-semibold text-lg mb-4">{t('done.subtitle')}</p>
 
+        {/* Badges de cert track */}
+        {(hasNgfwBadge || hasArchitectBadge) && (
+          <div className="flex flex-col gap-2 mb-4">
+            {hasNgfwBadge && (
+              <div className="bg-emerald-900/50 border border-emerald-600 text-emerald-300 font-bold text-sm px-4 py-2 rounded-xl">
+                {t('badge.ngfw-ready')}
+              </div>
+            )}
+            {hasArchitectBadge && (
+              <div className="bg-yellow-900/50 border border-yellow-600 text-yellow-300 font-bold text-sm px-4 py-2 rounded-xl">
+                {t('badge.architect-ready')}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Estadísticas */}
-        <div className="bg-slate-900/60 rounded-xl p-4 mb-8 space-y-2">
+        <div className="bg-slate-900/60 rounded-xl p-4 mb-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-slate-400">{t('done.stat.score')}</span>
             <span className="text-amber-400 font-bold">{score}</span>
@@ -79,6 +118,40 @@ export default function CompletionScreen({
             </div>
           )}
         </div>
+
+        {/* Progress bars por track */}
+        {(ngfwTotal > 0 || architectTotal > 0) && (
+          <div className="bg-slate-900/60 rounded-xl p-4 mb-6 space-y-3">
+            {ngfwTotal > 0 && (
+              <div>
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>{t('progress.ngfw', { done: ngfwDone, total: ngfwTotal })}</span>
+                  <span>{Math.round((ngfwDone / ngfwTotal) * 100)}%</span>
+                </div>
+                <div className="bg-slate-700 rounded-full h-1.5">
+                  <div
+                    className="bg-emerald-500 h-1.5 rounded-full transition-all"
+                    style={{ width: `${(ngfwDone / ngfwTotal) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {architectTotal > 0 && (
+              <div>
+                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                  <span>{t('progress.architect', { done: architectDone, total: architectTotal })}</span>
+                  <span>{Math.round((architectDone / architectTotal) * 100)}%</span>
+                </div>
+                <div className="bg-slate-700 rounded-full h-1.5">
+                  <div
+                    className="bg-yellow-500 h-1.5 rounded-full transition-all"
+                    style={{ width: `${(architectDone / architectTotal) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <p className="text-slate-300 text-sm leading-relaxed mb-8">{t('done.body')}</p>
 

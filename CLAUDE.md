@@ -45,6 +45,15 @@ Separar en:
 - `src/components/` — `Visualizer`, `PolicyEditor`, `TrafficLog`, `LogModal`, `Onboarding`, `ResultOverlay`.
 - `App.jsx` queda como ensamblador delgado.
 
+## v2.0 — Cert Prep Tool (2026-06-25)
+
+- **43 niveles** en 3 tiers: F (Fundamentals, niveles 1-10), N (NGFW Engineer, 11-30), A (NetSec Architect, 31-43)
+- **Dos cert tracks:** `ngfw-engineer` (cubre 6 dominios del examen oficial) y `netsec-architect` (Zero Trust, HA, Cloud & Scale)
+- **Nuevas mechanics:** `multiRule` (policy-order con evaluateOrdered), `designCheck` (architect scenarios vía specialCheck), `objectLibrary` (address object validation)
+- **Engine additions:** `evaluateOrdered(rules, level)`, `detectShadowing(rules)` — exports nuevos, `evaluate()` intacto
+- **New components:** `MultiRuleEditor`, `ShadowWarning`, `CertTrackFilter` (en LevelSelect)
+- **208+ tests verdes**
+
 ## Invariantes / "gotchas" (NO reintroducir estos bugs)
 
 El motor de validación es el corazón del juego; al tocarlo, respetar:

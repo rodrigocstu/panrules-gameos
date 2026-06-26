@@ -147,6 +147,29 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'reason.SPECIAL_DROPPED': 'El paquete cae por diseño: configuración correcta que bloquea.',
     'reason.SPECIAL_WARNING': 'Funciona, pero viola la buena práctica de seguridad.',
     'reason.SPECIAL_MISMATCH': 'Configuración incorrecta para este escenario.',
+
+    // Track navigation
+    'track.all': 'Todos',
+    'track.ngfw-engineer': 'NGFW Engineer',
+    'track.netsec-architect': 'NetSec Architect',
+
+    // Tier headers
+    'tier.F.label': 'Fundamentals',
+    'tier.N.label': 'NGFW Engineer',
+    'tier.A.label': 'NetSec Architect',
+
+    // Badges
+    'badge.ngfw-ready': '🎓 NGFW Engineer Ready',
+    'badge.architect-ready': '🏆 NetSec Architect Ready',
+
+    // Progress
+    'progress.ngfw': 'NGFW Engineer: {done}/{total}',
+    'progress.architect': 'NetSec Architect: {done}/{total}',
+
+    // Multi-rule editor
+    'multirule.add': 'Añadir regla',
+    'multirule.rule': 'Regla {n}',
+    'multirule.shadow.warning': '⚠️ La regla {shadowed} está oculta por la regla {shadowing}',
   },
 
   en: {
@@ -275,5 +298,28 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'reason.SPECIAL_DROPPED': 'The packet drops by design: a correct configuration that blocks.',
     'reason.SPECIAL_WARNING': 'It works, but it violates security best practice.',
     'reason.SPECIAL_MISMATCH': 'Incorrect configuration for this scenario.',
+
+    // Track navigation
+    'track.all': 'All',
+    'track.ngfw-engineer': 'NGFW Engineer',
+    'track.netsec-architect': 'NetSec Architect',
+
+    // Tier headers
+    'tier.F.label': 'Fundamentals',
+    'tier.N.label': 'NGFW Engineer',
+    'tier.A.label': 'NetSec Architect',
+
+    // Badges
+    'badge.ngfw-ready': '🎓 NGFW Engineer Ready',
+    'badge.architect-ready': '🏆 NetSec Architect Ready',
+
+    // Progress
+    'progress.ngfw': 'NGFW Engineer: {done}/{total}',
+    'progress.architect': 'NetSec Architect: {done}/{total}',
+
+    // Multi-rule editor
+    'multirule.add': 'Add rule',
+    'multirule.rule': 'Rule {n}',
+    'multirule.shadow.warning': '⚠️ Rule {shadowed} is shadowed by rule {shadowing}',
   },
 };

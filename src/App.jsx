@@ -3,11 +3,13 @@ import { LEVELS } from './data/levels';
 import { createLog } from './lib/logs';
 import { usePacketAnimation } from './hooks/usePacketAnimation.js';
 import { useProgress } from './hooks/useProgress.js';
+import { evaluateOrdered } from './lib/firewall-engine';
 import TopBar from './components/TopBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import NetworkVisualizer from './components/NetworkVisualizer.jsx';
 import ResultOverlay from './components/ResultOverlay.jsx';
 import PolicyEditor from './components/PolicyEditor.jsx';
+import MultiRuleEditor from './components/MultiRuleEditor.jsx';
 import TrafficLog from './components/TrafficLog.jsx';
 import LogModal from './components/LogModal.jsx';
 import Onboarding from './components/Onboarding.jsx';
@@ -41,7 +43,7 @@ export default function FirewallNGFW() {
   // específica del fallo en el ExplanationPanel del resultado.
   const [reasonCode, setReasonCode] = useState(null);
 
-  // Policy State
+  // Policy State (nivel single-rule)
   const [ruleName, setRuleName] = useState('Rule-1');
   const [srcZone, setSrcZone] = useState('trust');
   const [dstZone, setDstZone] = useState('untrust');
@@ -51,7 +53,12 @@ export default function FirewallNGFW() {
   const [action, setAction] = useState('ALLOW');
   const [natType, setNatType] = useState('NONE');
 
+  // Policy State (nivel multi-rule): array de PolicyRule
+  const [multiRules, setMultiRules] = useState([]);
+
   const level = LEVELS[levelIdx];
+  // ¿Es este nivel un editor multi-regla?
+  const isMultiRule = level && level.multiRule === true;
 
   const handleResult = (isWin, reason, effect, code) => {
     setGameState(isWin ? 'success' : 'failure');
@@ -75,7 +82,13 @@ export default function FirewallNGFW() {
   // Snapshot de la política actual; los selects están deshabilitados durante la
   // animación, así que estos valores no cambian hasta que vuelve a 'idle'.
   const commitPolicy = () => {
-    startCommit(level, { srcZone, dstZone, app, service, action, nat: natType, profile });
+    if (isMultiRule) {
+      // Multi-rule: evaluar con evaluateOrdered
+      if (!multiRules || multiRules.length === 0) return;
+      startCommit(level, multiRules[0], { multiRules, useOrdered: true });
+    } else {
+      startCommit(level, { srcZone, dstZone, app, service, action, nat: natType, profile });
+    }
   };
 
   // Resetea los campos de la política a sus valores por defecto entre niveles.
@@ -88,6 +101,7 @@ export default function FirewallNGFW() {
     setProfile('none');
     setAction('ALLOW');
     setNatType('NONE');
+    setMultiRules([]);
     resetPacket();
     setGameState('idle');
   };
@@ -129,6 +143,7 @@ export default function FirewallNGFW() {
           levelIdx={levelIdx}
           level={level}
           onOpenLevelSelect={() => setShowLevelSelect(true)}
+          completed={completed}
         />
 
         {/* Center: Visualizer & Editor */}
@@ -153,26 +168,34 @@ export default function FirewallNGFW() {
 
           {/* --- EDITOR --- */}
           <div className="h-1/2 flex flex-col bg-slate-900">
-            <PolicyEditor
-              level={level}
-              ruleName={ruleName}
-              setRuleName={setRuleName}
-              srcZone={srcZone}
-              setSrcZone={setSrcZone}
-              dstZone={dstZone}
-              setDstZone={setDstZone}
-              app={app}
-              setApp={setApp}
-              service={service}
-              setService={setService}
-              action={action}
-              setAction={setAction}
-              profile={profile}
-              setProfile={setProfile}
-              natType={natType}
-              setNatType={setNatType}
-              disabled={gameState !== 'idle'}
-            />
+            {isMultiRule ? (
+              <MultiRuleEditor
+                rules={multiRules}
+                setRules={setMultiRules}
+                disabled={gameState !== 'idle'}
+              />
+            ) : (
+              <PolicyEditor
+                level={level}
+                ruleName={ruleName}
+                setRuleName={setRuleName}
+                srcZone={srcZone}
+                setSrcZone={setSrcZone}
+                dstZone={dstZone}
+                setDstZone={setDstZone}
+                app={app}
+                setApp={setApp}
+                service={service}
+                setService={setService}
+                action={action}
+                setAction={setAction}
+                profile={profile}
+                setProfile={setProfile}
+                natType={natType}
+                setNatType={setNatType}
+                disabled={gameState !== 'idle'}
+              />
+            )}
 
             <TrafficLog logs={logs} onSelectLog={setSelectedLog} />
           </div>
@@ -198,7 +221,9 @@ export default function FirewallNGFW() {
       {/* Pantalla de finalización — reemplaza el alert() eliminado (T3.3) */}
       {showCompletion && (
         <CompletionScreen
+          levels={LEVELS}
           totalLevels={LEVELS.length}
+          completed={completed}
           attempts={attempts}
           score={score}
           bestStreak={bestStreak}
