@@ -806,6 +806,515 @@ describe('evaluate() — profile component validation (v2)', () => {
   });
 });
 
+// ─── Agent 4: Niveles 19–43 ──────────────────────────────────────────────────
+
+// Niveles NGFW Engineer — Objects & Profiles (19–24)
+const level19 = LEVELS[18]; // Named Address Objects
+const level20 = LEVELS[19]; // Address Group
+const level21 = LEVELS[20]; // AV-only vs Threat Prevention completo (profileGroup)
+const level22 = LEVELS[21]; // URL Filtering por categoría
+const level23 = LEVELS[22]; // File Blocking Profile DLP
+const level24 = LEVELS[23]; // External Dynamic List (EDL)
+
+// Niveles NGFW Engineer — Advanced (25–30)
+const level25 = LEVELS[24]; // Decryption Policy specialCheck
+const level26 = LEVELS[25]; // User-ID grupo AD
+const level27 = LEVELS[26]; // Log Forwarding Profile
+const level28 = LEVELS[27]; // Application Filter bloqueo social media
+const level29 = LEVELS[28]; // Zone Protection Profile SYN flood
+const level30 = LEVELS[29]; // Policy-Based Forwarding DNS
+
+// Niveles NetSec Architect (31–43)
+const level31 = LEVELS[30]; // Zero Trust micro-segmentación
+const level32 = LEVELS[31]; // Zero Trust Never-Trust-Always-Verify
+const level33 = LEVELS[32]; // Zero Trust Least Privilege
+const level34 = LEVELS[33]; // Management Plane Separation
+const level35 = LEVELS[34]; // Prisma Access SASE vs VPN
+const level36 = LEVELS[35]; // HA Active-Passive vs Active-Active
+const level37 = LEVELS[36]; // HA links HA1 vs HA2
+const level38 = LEVELS[37]; // HA failover Floating IP + GARP
+const level39 = LEVELS[38]; // Multi-ISP ECMP + PBF
+const level40 = LEVELS[39]; // Panorama Device Groups + Templates
+const level41 = LEVELS[40]; // Prisma Access Service Connection vs Remote Network
+const level42 = LEVELS[41]; // SD-WAN traffic steering SaaS
+const level43 = LEVELS[42]; // Compliance NIST CSF PR.AC-4
+
+describe('Niveles NGFW Engineer — Objects & Profiles (19–24)', () => {
+  // L19: Named Address Objects — dstAddress: addr-web-server
+  it('Level 19: ALLOW ssl trust→dmz con dstAddress addr-web-server es correcto', () => {
+    const verdict = evaluate(configFrom(level19, { dstAddress: 'addr-web-server' }), level19);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 19: ALLOW ssl sin dstAddress address object falla con ADDRESS_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level19), level19);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ADDRESS_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/addr-web-server/);
+  });
+
+  it('Level 19: dstAddress incorrecto (addr-db-server) falla con ADDRESS_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level19, { dstAddress: 'addr-db-server' }), level19);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ADDRESS_MISMATCH');
+  });
+
+  it('Level 19: DENY incorrecto falla con ACTION_MISMATCH (address correcto pero acción incorrecta)', () => {
+    // dstAddress correcto => pasa validación de address; action DENY incorrecto => ACTION_MISMATCH
+    const verdict = evaluate(configFrom(level19, { dstAddress: 'addr-web-server', action: 'DENY' }), level19);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  // L20: Address Group — dstAddress: group-dmz-servers
+  it('Level 20: ALLOW ssl trust→dmz con dstAddress group-dmz-servers es correcto', () => {
+    const verdict = evaluate(configFrom(level20, { dstAddress: 'group-dmz-servers' }), level20);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 20: ALLOW ssl sin dstAddress falla con ADDRESS_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level20), level20);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ADDRESS_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/group-dmz-servers/);
+  });
+
+  it('Level 20: perfil none falla (se requiere al menos default)', () => {
+    const verdict = evaluate(configFrom(level20, { dstAddress: 'group-dmz-servers', profile: 'none' }), level20);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_MISSING');
+  });
+
+  // L21: AV-only vs Threat Prevention — profileGroup con cuatro componentes
+  it('Level 21: ALLOW con profileGroup completo (av+vuln+antispyware+wildfire) es correcto', () => {
+    const verdict = evaluate(configFrom(level21, {
+      profile: 'strict',
+      nat: 'DNAT',
+      profileGroup: { antivirus: 'av-only', vulnerability: 'vuln-only', antispyware: 'antispyware-only', wildfire: 'wildfire-only' },
+    }), level21);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 21: profileGroup sin antivirus falla con PROFILE_COMPONENT_MISSING', () => {
+    const verdict = evaluate(configFrom(level21, {
+      profile: 'strict',
+      nat: 'DNAT',
+      profileGroup: { vulnerability: 'vuln-only', antispyware: 'antispyware-only', wildfire: 'wildfire-only' },
+    }), level21);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_COMPONENT_MISSING');
+    expect(verdict.resultMsg).toMatch(/antivirus/);
+  });
+
+  it('Level 21: sin profileGroup falla con PROFILE_COMPONENT_MISSING', () => {
+    const verdict = evaluate(configFrom(level21, { profile: 'strict', nat: 'DNAT' }), level21);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_COMPONENT_MISSING');
+  });
+
+  // L22: URL Filtering — strict profile con SNAT
+  it('Level 22: ALLOW web-browsing guest→untrust con strict y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level22), level22);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 22: perfil default falla (requiere strict para URL Filtering)', () => {
+    const verdict = evaluate(configFrom(level22, { profile: 'default' }), level22);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_INSUFFICIENT');
+  });
+
+  it('Level 22: ALLOW sin SNAT falla en NAT rulebase', () => {
+    const verdict = evaluate(configFrom(level22, { nat: 'NONE' }), level22);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+  });
+
+  // L23: File Blocking Profile — FTP saliente con strict
+  it('Level 23: ALLOW ftp trust→untrust con strict y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level23), level23);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 23: ALLOW ftp con perfil none falla (requiere strict)', () => {
+    const verdict = evaluate(configFrom(level23, { profile: 'none' }), level23);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_MISSING');
+  });
+
+  it('Level 23: App-ID ssl en lugar de ftp falla con APP_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level23, { app: 'ssl' }), level23);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+  });
+
+  // L24: External Dynamic List (EDL) — DENY con srcAddress edl-known-bad-ips
+  it('Level 24: DENY web-browsing untrust→trust con srcAddress edl-known-bad-ips es correcto', () => {
+    const verdict = evaluate(configFrom(level24, { srcAddress: 'edl-known-bad-ips' }), level24);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('Level 24: DENY sin srcAddress EDL falla con ADDRESS_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level24), level24);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ADDRESS_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/edl-known-bad-ips/);
+  });
+
+  it('Level 24: ALLOW incorrecto falla (debe ser DENY para bloquear IPs maliciosas)', () => {
+    const verdict = evaluate(configFrom(level24, { srcAddress: 'edl-known-bad-ips', action: 'ALLOW' }), level24);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+});
+
+describe('Niveles NGFW Engineer — Advanced (25–30)', () => {
+  // L25: Decryption Policy — specialCheck (strict pasa con WARNING, otros fallan)
+  it('Level 25: perfil strict activa el WARNING del specialCheck (allow-win)', () => {
+    const verdict = evaluate(configFrom(level25, { nat: 'SNAT' }), level25);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.terminal).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.resultMsg).toContain('WARNING');
+  });
+
+  it('Level 25: perfil none activa DROPPED del specialCheck (block-win)', () => {
+    const verdict = evaluate(configFrom(level25, { nat: 'SNAT', profile: 'none' }), level25);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.terminal).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.resultMsg).toContain('DROPPED');
+  });
+
+  it('Level 25: perfil default falla con SPECIAL_MISMATCH (insuficiente para HTTPS)', () => {
+    const verdict = evaluate(configFrom(level25, { nat: 'SNAT', profile: 'default' }), level25);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.terminal).toBe(true);
+    expect(verdict.reasonCode).toBe('SPECIAL_MISMATCH');
+  });
+
+  // L26: User-ID grupo AD — SSH trust→dmz
+  it('Level 26: ALLOW ssh trust→dmz con default profile es correcto', () => {
+    const verdict = evaluate(configFrom(level26), level26);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 26: DENY ssh trust→dmz es incorrecto (debe permitirse a IT-Admins)', () => {
+    const verdict = evaluate(configFrom(level26, { action: 'DENY' }), level26);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 26: App-ID ssl en lugar de ssh falla', () => {
+    const verdict = evaluate(configFrom(level26, { app: 'ssl' }), level26);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+  });
+
+  // L27: Log Forwarding Profile — web-browsing untrust→dmz con DNAT
+  it('Level 27: ALLOW web-browsing untrust→dmz con strict y DNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level27), level27);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 27: ALLOW sin DNAT falla en NAT rulebase', () => {
+    const verdict = evaluate(configFrom(level27, { nat: 'NONE' }), level27);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+  });
+
+  it('Level 27: perfil default falla (requiere strict)', () => {
+    const verdict = evaluate(configFrom(level27, { profile: 'default' }), level27);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_INSUFFICIENT');
+  });
+
+  // L28: Application Filter — DENY ssl trust→untrust (bloqueo redes sociales)
+  it('Level 28: DENY ssl trust→untrust es correcto (bloquear redes sociales)', () => {
+    const verdict = evaluate(configFrom(level28), level28);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('Level 28: ALLOW ssl trust→untrust es incorrecto (no debe permitirse)', () => {
+    const verdict = evaluate(configFrom(level28, { action: 'ALLOW' }), level28);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 28: DENY con NAT SNAT es aún correcto (DENY no pasa por NAT rulebase)', () => {
+    const verdict = evaluate(configFrom(level28, { nat: 'SNAT' }), level28);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+  });
+
+  // L29: Zone Protection Profile — web-browsing untrust→dmz con strict y DNAT
+  it('Level 29: ALLOW web-browsing untrust→dmz con strict y DNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level29), level29);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 29: perfil none falla (requiere strict para tráfico desde Untrust)', () => {
+    const verdict = evaluate(configFrom(level29, { profile: 'none' }), level29);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_MISSING');
+  });
+
+  it('Level 29: DENY incorrecto (el tráfico legítimo debe permitirse con inspección)', () => {
+    const verdict = evaluate(configFrom(level29, { action: 'DENY' }), level29);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  // L30: Policy-Based Forwarding — dns trust→untrust con service-dns
+  it('Level 30: ALLOW dns trust→untrust con service-dns y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level30), level30);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 30: service application-default en lugar de service-dns falla', () => {
+    const verdict = evaluate(configFrom(level30, { service: 'application-default' }), level30);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('SERVICE_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/service-dns/);
+  });
+
+  it('Level 30: ALLOW dns sin SNAT falla en NAT rulebase', () => {
+    const verdict = evaluate(configFrom(level30, { nat: 'NONE' }), level30);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+  });
+});
+
+describe('Niveles NetSec Architect (31–43)', () => {
+  // L31: Zero Trust micro-segmentación — DENY ssl dmz→dmz
+  it('Level 31: DENY ssl dmz→dmz es correcto (micro-segmentación ZT)', () => {
+    const verdict = evaluate(configFrom(level31), level31);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('Level 31: ALLOW ssl dmz→dmz es incorrecto (permite movimiento lateral)', () => {
+    const verdict = evaluate(configFrom(level31, { action: 'ALLOW' }), level31);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 31: DENY con zonas incorrectas falla (ZONE_MISMATCH)', () => {
+    const verdict = evaluate(configFrom(level31, { srcZone: 'trust', dstZone: 'dmz' }), level31);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ZONE_MISMATCH');
+  });
+
+  // L32: Zero Trust Never-Trust-Always-Verify
+  it('Level 32: ALLOW ssl trust→dmz con strict es correcto', () => {
+    const verdict = evaluate(configFrom(level32), level32);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 32: ALLOW ssl trust→dmz con perfil default falla (requiere strict para ZT)', () => {
+    const verdict = evaluate(configFrom(level32, { profile: 'default' }), level32);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_INSUFFICIENT');
+  });
+
+  // L33: Zero Trust Least Privilege
+  it('Level 33: ALLOW ssl trust→dmz con default es correcto (mínimo necesario)', () => {
+    const verdict = evaluate(configFrom(level33), level33);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 33: App-ID any falla (violación de least privilege)', () => {
+    const verdict = evaluate(configFrom(level33, { app: 'any' }), level33);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/any/i);
+  });
+
+  // L34: Management Plane Separation — DENY ssh trust→management
+  it('Level 34: DENY ssh trust→management es correcto (OOB obligatorio)', () => {
+    const verdict = evaluate(configFrom(level34), level34);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('Level 34: ALLOW ssh trust→management es incorrecto (in-band admin es inseguro)', () => {
+    const verdict = evaluate(configFrom(level34, { action: 'ALLOW' }), level34);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 34: DENY con zona management incorrecta falla (ZONE_MISMATCH)', () => {
+    const verdict = evaluate(configFrom(level34, { dstZone: 'dmz' }), level34);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ZONE_MISMATCH');
+  });
+
+  // L35: Prisma Access SASE
+  it('Level 35: ALLOW ssl untrust→trust con strict y DNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level35), level35);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 35: perfil none falla (requiere strict para usuarios remotos)', () => {
+    const verdict = evaluate(configFrom(level35, { profile: 'none' }), level35);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_MISSING');
+  });
+
+  // L36: HA Active-Passive vs Active-Active
+  it('Level 36: ALLOW ssl trust→untrust con SNAT y default es correcto', () => {
+    const verdict = evaluate(configFrom(level36), level36);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 36: ALLOW sin SNAT falla en NAT rulebase', () => {
+    const verdict = evaluate(configFrom(level36, { nat: 'NONE' }), level36);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+  });
+
+  // L37: HA links HA1 vs HA2
+  it('Level 37: ALLOW ssl trust→untrust con SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level37), level37);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 37: zona incorrecta falla con ZONE_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level37, { dstZone: 'dmz' }), level37);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ZONE_MISMATCH');
+  });
+
+  // L38: HA failover Floating IP + GARP
+  it('Level 38: ALLOW web-browsing untrust→trust con DNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level38), level38);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 38: ALLOW sin DNAT falla en NAT rulebase (falta la regla de traducción)', () => {
+    const verdict = evaluate(configFrom(level38, { nat: 'NONE' }), level38);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+  });
+
+  // L39: Multi-ISP ECMP + PBF
+  it('Level 39: ALLOW dns trust→untrust con service-dns y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level39), level39);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 39: service application-default en lugar de service-dns falla', () => {
+    const verdict = evaluate(configFrom(level39, { service: 'application-default' }), level39);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('SERVICE_MISMATCH');
+  });
+
+  // L40: Panorama Device Groups + Templates
+  it('Level 40: ALLOW ssl trust→untrust con strict y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level40), level40);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 40: perfil default falla (requiere strict para política global de compliance)', () => {
+    const verdict = evaluate(configFrom(level40, { profile: 'default' }), level40);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_INSUFFICIENT');
+  });
+
+  // L41: Prisma Access Service Connection vs Remote Network
+  it('Level 41: ALLOW ssl trust→untrust con strict y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level41), level41);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 41: DENY incorrecto (el tráfico branch a datacenter debe permitirse)', () => {
+    const verdict = evaluate(configFrom(level41, { action: 'DENY' }), level41);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  // L42: SD-WAN traffic steering — office365-base
+  it('Level 42: ALLOW office365-base trust→untrust con strict y SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level42), level42);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 42: App-ID ssl en lugar de office365-base falla (App-ID específico requerido)', () => {
+    const verdict = evaluate(configFrom(level42, { app: 'ssl' }), level42);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+  });
+
+  it('Level 42: perfil none falla (se requiere strict para SaaS)', () => {
+    const verdict = evaluate(configFrom(level42, { profile: 'none' }), level42);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_MISSING');
+  });
+
+  // L43: Compliance NIST CSF PR.AC-4
+  it('Level 43: ALLOW ssh trust→dmz con default es correcto (evidencia PR.AC-4)', () => {
+    const verdict = evaluate(configFrom(level43), level43);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 43: App-ID any falla (violación de least privilege en evidencia de compliance)', () => {
+    const verdict = evaluate(configFrom(level43, { app: 'any' }), level43);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+  });
+
+  it('Level 43: DENY incorrecto (los IT-Admins deben tener acceso SSH — el control es la granularidad)', () => {
+    const verdict = evaluate(configFrom(level43, { action: 'DENY' }), level43);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+});
+
 // ─── Agent 3: Niveles NGFW Engineer 11–18 ────────────────────────────────────
 
 describe('Niveles NGFW Engineer — 11–18', () => {
