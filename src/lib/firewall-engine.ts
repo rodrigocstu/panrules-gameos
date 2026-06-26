@@ -22,10 +22,7 @@ import type {
   NatType,
   ReasonCode,
 } from '../types/domain';
-
-// Orden de severidad de perfiles de seguridad: a mayor índice, más inspección.
-// PAN-OS: un Security Profile Group más estricto incluye lo que cubre el inferior.
-const PROFILE_RANK: Record<ProfileId, number> = { none: 0, default: 1, strict: 2 };
+import { PROFILE_RANK } from '../data/constants';
 
 export function evaluate(config: PolicyConfig, level: Level): Verdict {
   const { srcZone, dstZone, app, service, action, nat, profile } = config;

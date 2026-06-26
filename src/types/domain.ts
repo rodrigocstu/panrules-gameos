@@ -6,7 +6,7 @@
 // compilación, no un bug silencioso en runtime.
 
 // --- Literales del dominio ---
-export type ZoneId = 'trust' | 'untrust' | 'dmz' | 'guest';
+export type ZoneId = 'trust' | 'untrust' | 'dmz' | 'guest' | 'management' | 'iot' | 'industrial';
 export type AppId =
   | 'any'
   | 'web-browsing'
@@ -15,14 +15,45 @@ export type AppId =
   | 'dns'
   | 'ftp'
   | 'ms-rdp'
-  | 'unknown-tcp';
+  | 'unknown-tcp'
+  | 'ipsec-esp-udp'
+  | 'ntp'
+  | 'syslog'
+  | 'ldap'
+  | 'kerberos'
+  | 'smtp'
+  | 'imap'
+  | 'pop3'
+  | 'snmp'
+  | 'tftp'
+  | 'msrpc'
+  | 'office365-base'
+  | 'unknown-udp';
 export type ServiceId =
   | 'application-default'
   | 'service-http'
   | 'service-https'
   | 'service-rdp'
-  | 'any';
-export type ProfileId = 'none' | 'default' | 'strict';
+  | 'any'
+  | 'service-dns'
+  | 'service-smtp'
+  | 'service-ldap'
+  | 'service-ldaps'
+  | 'service-ntp'
+  | 'service-syslog'
+  | 'service-custom-8443'
+  | 'service-custom-4443';
+export type ProfileId =
+  | 'none'
+  | 'default'
+  | 'strict'
+  | 'av-only'
+  | 'vuln-only'
+  | 'antispyware-only'
+  | 'url-only'
+  | 'wildfire-only'
+  | 'file-blocking-basic'
+  | 'threat-prevention-full';
 // El perfil REQUERIDO por una solución puede además ser 'any' (irrelevante).
 export type RequiredProfile = ProfileId | 'any';
 export type NatType = 'NONE' | 'SNAT' | 'DNAT' | 'DNAT+SNAT';
@@ -56,6 +87,53 @@ export interface Packet {
   app: AppId;
 }
 
+// ─── Cert Track System ───────────────────────────────────────────────────────
+// Tier de dificultad: F = Fundamentals, N = NGFW Engineer, A = NetSec Architect.
+export type LevelTier = 'F' | 'N' | 'A';
+export type CertTrack = 'ngfw-engineer' | 'netsec-architect';
+
+// ─── Object Library ──────────────────────────────────────────────────────────
+export type AddressObjectId = string; // named object IDs
+
+export type AddressObjectType = 'ip-netmask' | 'fqdn' | 'ip-range' | 'ip-wildcard';
+
+export interface AddressObject {
+  id: AddressObjectId;
+  type: AddressObjectType;
+  value: string;
+  tags: string[];
+}
+
+export interface AddressGroup {
+  id: AddressObjectId;
+  members: AddressObjectId[];
+  dynamicFilter?: string; // DAG filter expression
+}
+
+export interface ExternalDynamicList {
+  id: AddressObjectId;
+  type: 'ip' | 'domain' | 'url';
+  url: string; // para referencia pedagógica, NUNCA se hace fetch en runtime
+  updateInterval: 'hourly' | 'daily' | 'weekly';
+}
+
+export interface ObjectLibrary {
+  addresses?: AddressObject[];
+  groups?: AddressGroup[];
+  edls?: ExternalDynamicList[];
+  tags?: string[];
+}
+
+// ─── Security Profile Groups ──────────────────────────────────────────────────
+export interface SecurityProfileGroup {
+  antivirus?: ProfileId;
+  vulnerability?: ProfileId;
+  antispyware?: ProfileId;
+  urlFiltering?: ProfileId;
+  wildfire?: ProfileId;
+  fileBlocking?: ProfileId;
+}
+
 // La política correcta esperada: la fuente de verdad de la validación.
 export interface Solution {
   srcZone: ZoneId;
@@ -65,6 +143,10 @@ export interface Solution {
   action: Action;
   nat: NatType;
   profile: RequiredProfile;
+  // Campos opcionales para los niveles de la v2 (address objects y profile groups).
+  srcAddress?: AddressObjectId | 'any';
+  dstAddress?: AddressObjectId | 'any';
+  profileGroup?: SecurityProfileGroup;
 }
 
 // Una dirección NAT: IP original -> traducida (igual si no se traduce).
@@ -109,6 +191,9 @@ export interface Level {
   hint: LocalizedText;
   explanation: LocalizedText;
   specialCheck?: (config: PolicyConfig) => SpecialCheckResult;
+  // Campos opcionales de la v2: track curricular y tier de dificultad.
+  tier?: LevelTier;
+  tracks?: CertTrack[];
 }
 
 // --- Veredicto del motor ---
@@ -126,7 +211,14 @@ export type ReasonCode =
   | 'PROFILE_INSUFFICIENT'
   | 'SPECIAL_DROPPED'
   | 'SPECIAL_WARNING'
-  | 'SPECIAL_MISMATCH';
+  | 'SPECIAL_MISMATCH'
+  // v2: nuevos reason codes para mecánicas avanzadas.
+  | 'ADDRESS_MISMATCH'
+  | 'PROFILE_COMPONENT_MISSING'
+  | 'DECRYPTION_MISMATCH'
+  | 'DESIGN_INCORRECT'
+  | 'RULE_ORDER_MISMATCH'
+  | 'SHADOW_DETECTED';
 
 export interface Verdict {
   isWin: boolean;
@@ -135,4 +227,45 @@ export interface Verdict {
   terminal: boolean;
   outcome: Outcome;
   reasonCode: ReasonCode;
+}
+
+// ─── Policy-Order Engine ──────────────────────────────────────────────────────
+export interface PolicyRule extends PolicyConfig {
+  id: string;
+  disabled?: boolean;
+  description?: LocalizedText;
+}
+
+export interface OrderedVerdict extends Verdict {
+  matchedRuleId: string | null;
+  shadowedBy: string | null;
+  rulesEvaluated: number;
+}
+
+export type ShadowReason =
+  | 'superset-source'
+  | 'superset-dest'
+  | 'superset-app'
+  | 'deny-before-allow';
+
+export interface ShadowReport {
+  shadowedRuleId: string;
+  shadowingRuleId: string;
+  reason: ShadowReason;
+}
+
+// ─── Architect Design Mechanic ────────────────────────────────────────────────
+export type DesignChoiceId = string;
+
+export interface DesignChoice {
+  id: DesignChoiceId;
+  label: LocalizedText;
+  rationale: LocalizedText; // explicación de por qué esta opción es correcta/incorrecta
+}
+
+// ─── Decryption Rulebase ──────────────────────────────────────────────────────
+export interface DecryptionConfig {
+  action: 'decrypt' | 'no-decrypt';
+  type: 'ssl-forward-proxy' | 'ssl-inbound-inspection' | 'ssh-proxy';
+  profile?: string;
 }

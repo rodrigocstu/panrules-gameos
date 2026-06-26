@@ -27,6 +27,8 @@ import type { Level } from '../types/domain.js';
 export const LEVELS: Level[] = [
   {
     id: 1,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Acceso seguro a Internet', en: 'Secure Internet Access' },
     desc: {
       es: 'Los usuarios de Trust necesitan navegar por sitios web seguros. La política exige protección Antivirus básica.',
@@ -66,6 +68,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 2,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Publicar el servidor web de la DMZ', en: 'Publishing DMZ Web Server' },
     desc: {
       es: 'Usuarios de Internet necesitan acceder al Portal de la empresa alojado en la DMZ.',
@@ -105,6 +109,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 3,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Bloquear SSH en puerto no estándar', en: 'Block Non-Standard SSH' },
     desc: {
       es: 'Un desarrollador interno intenta conectarse por SSH a un servidor de la DMZ usando un puerto alto no estándar (2222).',
@@ -160,6 +166,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 4,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'NAT en horquilla (U-Turn)', en: 'The Hairpin (U-Turn) NAT' },
     desc: {
       es: 'Un usuario interno (Trust) intenta acceder al servidor web de la DMZ a través de su IP PÚBLICA.',
@@ -199,6 +207,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 5,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Intento de exfiltración de datos', en: 'Data Exfiltration Attempt' },
     desc: {
       es: 'Un host comprometido en Guest intenta tunelizar datos por DNS hacia una IP sospechosa.',
@@ -238,6 +248,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 6,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Acceso RDP intra-zona', en: 'Intra-zone RDP Access' },
     desc: {
       es: 'Un administrador en Trust necesita RDP a un servidor de gestión en la MISMA zona Trust.',
@@ -277,6 +289,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 7,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Filtrado de URL para invitados', en: 'URL Filtering for Guests' },
     desc: {
       es: 'Los invitados pueden navegar la web, pero hay que bloquear categorías peligrosas (malware, phishing).',
@@ -316,6 +330,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 8,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Publicar un jump host RDP', en: 'Publish an RDP Jump Host' },
     desc: {
       es: 'Un proveedor externo necesita RDP a un jump host de la DMZ a través de su IP pública.',
@@ -355,6 +371,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 9,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'Bloquear FTP saliente', en: 'Block Outbound FTP' },
     desc: {
       es: 'La política prohíbe FTP en claro hacia Internet por fuga de datos. App-ID lo detecta aunque use un puerto raro.',
@@ -394,6 +412,8 @@ export const LEVELS: Level[] = [
   },
   {
     id: 10,
+    tier: 'F',
+    tracks: ['ngfw-engineer'],
     title: { es: 'U-Turn para el jump host RDP', en: 'U-Turn for the RDP Jump Host' },
     desc: {
       es: 'Un usuario interno (Trust) intenta llegar al jump host RDP de la DMZ por su IP PÚBLICA.',
