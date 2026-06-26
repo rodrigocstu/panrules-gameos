@@ -198,6 +198,7 @@ export interface Level {
   // Campos opcionales de la v2: track curricular y tier de dificultad.
   tier?: LevelTier;
   tracks?: CertTrack[];
+  requires?: number[]; // IDs de niveles prerequisito que deben estar completados
 }
 
 // --- Veredicto del motor ---
