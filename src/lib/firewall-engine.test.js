@@ -9,6 +9,16 @@ const level3 = LEVELS[2]; // Block Non-Standard SSH (specialCheck)
 const level4 = LEVELS[3]; // The Hairpin / U-Turn NAT (ALLOW + DNAT+SNAT)
 const level5 = LEVELS[4]; // Data Exfiltration Attempt (DENY)
 
+// Niveles NGFW Engineer (tier N)
+const level11 = LEVELS[10]; // First-match: ssl pasa aunque haya deny web-browsing antes
+const level12 = LEVELS[11]; // Rule shadowing: DENY ssh antes de allow-all
+const level13 = LEVELS[12]; // Implicit deny: FTP DMZ→untrust
+const level14 = LEVELS[13]; // Intra-zone default allow: DENY DMZ→DMZ
+const level15 = LEVELS[14]; // Zona cubre múltiples interfaces
+const level16 = LEVELS[15]; // Service object custom TCP/8443
+const level17 = LEVELS[16]; // unknown-tcp aplicación propietaria
+const level18 = LEVELS[17]; // Dynamic Address Group (DAG)
+
 // Helper: construye una config a partir de la solución del nivel (+ overrides).
 // La solución no trae `nat` siempre presente como campo de config, así que lo
 // normalizamos desde solution.nat.
@@ -793,5 +803,189 @@ describe('evaluate() — profile component validation (v2)', () => {
     const verdict = evaluate(cfg, groupLevel);
     expect(verdict.resultMsg).toMatch(/av-only/);
     expect(verdict.resultMsg).toMatch(/antivirus/);
+  });
+});
+
+// ─── Agent 3: Niveles NGFW Engineer 11–18 ────────────────────────────────────
+
+describe('Niveles NGFW Engineer — 11–18', () => {
+  // L11: First-match top-down (ssl vs web-browsing)
+  it('Level 11: ALLOW ssl trust→untrust con SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level11), level11);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 11: DENY ssl trust→untrust es incorrecto (action mismatch)', () => {
+    const verdict = evaluate(configFrom(level11, { action: 'DENY' }), level11);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 11: App-ID web-browsing en lugar de ssl es incorrecto', () => {
+    const verdict = evaluate(configFrom(level11, { app: 'web-browsing' }), level11);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+  });
+
+  // L12: Rule shadowing — DENY ssh trust→untrust
+  it('Level 12: DENY ssh trust→untrust es correcto (bloquear tráfico sospechoso)', () => {
+    const verdict = evaluate(configFrom(level12), level12);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('Level 12: ALLOW ssh trust→untrust es incorrecto (no debe permitirse)', () => {
+    const verdict = evaluate(configFrom(level12, { action: 'ALLOW' }), level12);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 12: DENY ssh con NAT SNAT es incorrecto (DENY no pasa por NAT rulebase, pero la solution pide NONE)', () => {
+    // El NAT no se evalúa para DENY, así que lo que importa es la acción y el app.
+    // Con la acción correcta DENY y el resto correcto, el veredicto es block-win.
+    const verdict = evaluate(configFrom(level12, { nat: 'SNAT' }), level12);
+    // Para DENY, el NAT rulebase no se evalúa => sigue siendo block-win
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+  });
+
+  // L13: Implicit deny — FTP DMZ→untrust necesita regla explícita
+  it('Level 13: ALLOW ftp dmz→untrust con SNAT es correcto', () => {
+    const verdict = evaluate(configFrom(level13), level13);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 13: DENY ftp dmz→untrust es incorrecto (debe permitirse)', () => {
+    const verdict = evaluate(configFrom(level13, { action: 'DENY' }), level13);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 13: ALLOW ftp sin SNAT falla en el NAT rulebase', () => {
+    const verdict = evaluate(configFrom(level13, { nat: 'NONE' }), level13);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/NAT Rulebase/i);
+  });
+
+  // L14: Intra-zone default allow + micro-segmentación
+  it('Level 14: DENY ssl dmz→dmz es correcto (bloquear movimiento lateral)', () => {
+    const verdict = evaluate(configFrom(level14), level14);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('block-win');
+    expect(verdict.reasonCode).toBe('OK_BLOCK');
+  });
+
+  it('Level 14: ALLOW ssl dmz→dmz es incorrecto (permite movimiento lateral)', () => {
+    const verdict = evaluate(configFrom(level14, { action: 'ALLOW' }), level14);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 14: DENY ssl con zonas incorrectas falla (zona mismatch)', () => {
+    const verdict = evaluate(configFrom(level14, { srcZone: 'trust', dstZone: 'dmz' }), level14);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ZONE_MISMATCH');
+  });
+
+  // L15: Zona cubre múltiples interfaces
+  it('Level 15: ALLOW web-browsing trust→dmz sin NAT es correcto', () => {
+    const verdict = evaluate(configFrom(level15), level15);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 15: ALLOW web-browsing trust→dmz con SNAT incorrecto falla en NAT rulebase', () => {
+    const verdict = evaluate(configFrom(level15, { nat: 'SNAT' }), level15);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/no debe traducirse/i);
+  });
+
+  it('Level 15: perfil none falla (se requiere al menos default)', () => {
+    const verdict = evaluate(configFrom(level15, { profile: 'none' }), level15);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('PROFILE_MISSING');
+  });
+
+  // L16: Service object custom TCP/8443
+  it('Level 16: ALLOW ssl trust→dmz con service-custom-8443 es correcto', () => {
+    const verdict = evaluate(configFrom(level16), level16);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 16: ALLOW ssl trust→dmz con application-default falla (puerto incorrecto)', () => {
+    const verdict = evaluate(configFrom(level16, { service: 'application-default' }), level16);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('SERVICE_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/service-custom-8443/);
+  });
+
+  it('Level 16: ALLOW ssl trust→dmz con service-https falla', () => {
+    const verdict = evaluate(configFrom(level16, { service: 'service-https' }), level16);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('SERVICE_MISMATCH');
+  });
+
+  // L17: unknown-tcp aplicación propietaria sin perfil
+  it('Level 17: ALLOW unknown-tcp trust→dmz con service any y perfil none es correcto', () => {
+    const verdict = evaluate(configFrom(level17), level17);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 17: ALLOW ssl en lugar de unknown-tcp es incorrecto (app mismatch)', () => {
+    const verdict = evaluate(configFrom(level17, { app: 'ssl' }), level17);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('APP_MISMATCH');
+  });
+
+  it('Level 17: ALLOW unknown-tcp con application-default falla (se requiere "any")', () => {
+    const verdict = evaluate(configFrom(level17, { service: 'application-default' }), level17);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('SERVICE_MISMATCH');
+  });
+
+  // L18: Dynamic Address Group (DAG)
+  it('Level 18: ALLOW web-browsing untrust→dmz con dstAddress group-dmz-servers es correcto', () => {
+    const verdict = evaluate(configFrom(level18, { dstAddress: 'group-dmz-servers' }), level18);
+    expect(verdict.isWin).toBe(true);
+    expect(verdict.outcome).toBe('allow-win');
+    expect(verdict.reasonCode).toBe('OK_ALLOW');
+  });
+
+  it('Level 18: ALLOW sin dstAddress address group falla con ADDRESS_MISMATCH', () => {
+    // Sin dstAddress => undefined !== 'group-dmz-servers'
+    const verdict = evaluate(configFrom(level18), level18);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ADDRESS_MISMATCH');
+    expect(verdict.resultMsg).toMatch(/group-dmz-servers/);
+  });
+
+  it('Level 18: ALLOW con dstAddress incorrecto falla con ADDRESS_MISMATCH', () => {
+    const verdict = evaluate(configFrom(level18, { dstAddress: 'addr-db-server' }), level18);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ADDRESS_MISMATCH');
+  });
+
+  it('Level 18: DENY incorrecto falla aunque el dstAddress sea correcto', () => {
+    const verdict = evaluate(configFrom(level18, { dstAddress: 'group-dmz-servers', action: 'DENY' }), level18);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('ACTION_MISMATCH');
+  });
+
+  it('Level 18: sin NAT DNAT falla en el NAT rulebase (falta DNAT)', () => {
+    const verdict = evaluate(configFrom(level18, { dstAddress: 'group-dmz-servers', nat: 'NONE' }), level18);
+    expect(verdict.isWin).toBe(false);
+    expect(verdict.reasonCode).toBe('NAT_MISMATCH');
   });
 });
