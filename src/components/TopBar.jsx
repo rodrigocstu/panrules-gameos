@@ -1,5 +1,6 @@
-import { Shield, Languages, Star, Flame } from 'lucide-react';
+import { Shield, Languages, Star, Flame, LayoutDashboard } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext.jsx';
+import { navigateTo } from '../hooks/useHashRoute.js';
 
 // Barra superior: marca del simulador + puntuación + selector de idioma + dispositivo.
 export default function TopBar({ score = 0, streak = 0 }) {
@@ -32,6 +33,17 @@ export default function TopBar({ score = 0, streak = 0 }) {
             </span>
           )}
         </div>
+        {/* Acceso a la Management Console (ruta '#/console'). */}
+        <button
+          type="button"
+          onClick={() => navigateTo('console')}
+          className="flex items-center gap-1.5 px-2 py-1 rounded border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+          aria-label={t('console.open')}
+          title={t('console.open')}
+        >
+          <LayoutDashboard size={14} aria-hidden="true" />
+          <span className="font-bold hidden sm:inline">{t('console.open')}</span>
+        </button>
         {/* Selector de idioma (T3.6): cambia ES/EN sin recargar. */}
         <button
           type="button"

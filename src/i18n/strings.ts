@@ -170,6 +170,29 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'multirule.add': 'Añadir regla',
     'multirule.rule': 'Regla {n}',
     'multirule.shadow.warning': '⚠️ La regla {shadowed} está oculta por la regla {shadowing}',
+
+    // Management Console
+    'console.open': 'Consola',
+    'console.title': 'Consola de Gestión',
+    'console.back': 'Volver al juego',
+    'console.nav.dashboard': 'Dashboard',
+    'console.level': 'Nivel',
+    'console.attempts': 'intentos',
+    'console.empty':
+      'Aún no hay datos de juego. Completa niveles en el simulador para poblar la analítica.',
+    'console.metric.completed': 'Niveles completados',
+    'console.metric.attempts': 'Intentos totales',
+    'console.metric.score': 'Puntuación',
+    'console.metric.beststreak': 'Mejor racha',
+    'console.heatmap.title': 'Mapa de dificultad por nivel',
+    'console.heatmap.subtitle':
+      'Color según los intentos reales para completar cada nivel (datos de tu progreso local).',
+    'console.heatmap.aria': 'Mapa de calor de los 43 niveles por dificultad',
+    'console.diff.easy': 'Fácil',
+    'console.diff.medium': 'Media',
+    'console.diff.hard': 'Difícil',
+    'console.diff.attempted': 'Intentado',
+    'console.diff.untried': 'Sin intentar',
   },
 
   en: {
@@ -321,5 +344,28 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'multirule.add': 'Add rule',
     'multirule.rule': 'Rule {n}',
     'multirule.shadow.warning': '⚠️ Rule {shadowed} is shadowed by rule {shadowing}',
+
+    // Management Console
+    'console.open': 'Console',
+    'console.title': 'Management Console',
+    'console.back': 'Back to game',
+    'console.nav.dashboard': 'Dashboard',
+    'console.level': 'Level',
+    'console.attempts': 'attempts',
+    'console.empty':
+      'No gameplay data yet. Complete levels in the simulator to populate the analytics.',
+    'console.metric.completed': 'Levels completed',
+    'console.metric.attempts': 'Total attempts',
+    'console.metric.score': 'Score',
+    'console.metric.beststreak': 'Best streak',
+    'console.heatmap.title': 'Difficulty heatmap by level',
+    'console.heatmap.subtitle':
+      'Color reflects the real number of attempts to complete each level (from your local progress).',
+    'console.heatmap.aria': 'Heatmap of all 43 levels by difficulty',
+    'console.diff.easy': 'Easy',
+    'console.diff.medium': 'Medium',
+    'console.diff.hard': 'Hard',
+    'console.diff.attempted': 'Attempted',
+    'console.diff.untried': 'Untried',
   },
 };
