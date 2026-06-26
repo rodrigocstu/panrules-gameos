@@ -175,7 +175,6 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'console.open': 'Consola',
     'console.title': 'Consola de Gestión',
     'console.back': 'Volver al juego',
-    'console.nav.dashboard': 'Dashboard',
     'console.level': 'Nivel',
     'console.attempts': 'intentos',
     'console.empty':
@@ -193,6 +192,51 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'console.diff.hard': 'Difícil',
     'console.diff.attempted': 'Intentado',
     'console.diff.untried': 'Sin intentar',
+
+    // Console — navegación de vistas
+    'console.nav.dashboard': 'Dashboard',
+    'console.nav.students': 'Alumnos',
+    'console.nav.catalog': 'Niveles',
+    'console.nav.builder': 'Level Builder',
+
+    // Console — cohorts (Instructor Mode)
+    'console.cohorts.new': 'Nuevo cohort',
+    'console.cohorts.name': 'Nombre del cohort',
+    'console.cohorts.namePlaceholder': 'Ej: Bootcamp NGFW Q3',
+    'console.cohorts.track': 'Track asignado',
+    'console.cohorts.changeTrack': 'Cambiar track del cohort',
+    'console.cohorts.add': 'Crear',
+    'console.cohorts.delete': 'Eliminar cohort',
+    'console.cohorts.empty': 'Aún no hay cohorts. Crea el primero para asignar un track.',
+    'console.cohorts.listAria': 'Lista de cohorts',
+    'console.cohorts.levels': 'niveles en el track',
+
+    // Console — catálogo de niveles
+    'console.catalog.levels': 'niveles',
+    'console.catalog.aria': 'Catálogo de niveles con estado de revisión SME',
+    'console.sme.verified': 'Verificado',
+    'console.sme.corrected': 'Corregido',
+    'console.sme.pending': 'Matiz pendiente',
+
+    // Console — Level Builder
+    'console.builder.meta': 'Metadatos',
+    'console.builder.texts': 'Textos bilingües (ES / EN)',
+    'console.builder.policy': 'Paquete y solución',
+    'console.builder.titleEs': 'Título (ES)',
+    'console.builder.titleEn': 'Título (EN)',
+    'console.builder.descEs': 'Descripción (ES)',
+    'console.builder.descEn': 'Descripción (EN)',
+    'console.builder.hintEs': 'Pista (ES)',
+    'console.builder.hintEn': 'Pista (EN)',
+    'console.builder.explEs': 'Explicación (ES)',
+    'console.builder.explEn': 'Explicación (EN)',
+    'console.builder.validate': 'Validar nivel',
+    'console.builder.valid': '✓ Nivel válido: la solución gana en el motor',
+    'console.builder.invalid': 'Nivel inválido',
+    'console.builder.missing': 'Campos faltantes',
+    'console.builder.engine': 'El motor rechaza la solución',
+    'console.builder.copy': 'Copiar JSON',
+    'console.builder.download': 'Descargar JSON',
   },
 
   en: {
@@ -349,7 +393,6 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'console.open': 'Console',
     'console.title': 'Management Console',
     'console.back': 'Back to game',
-    'console.nav.dashboard': 'Dashboard',
     'console.level': 'Level',
     'console.attempts': 'attempts',
     'console.empty':
@@ -367,5 +410,50 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'console.diff.hard': 'Hard',
     'console.diff.attempted': 'Attempted',
     'console.diff.untried': 'Untried',
+
+    // Console — view navigation
+    'console.nav.dashboard': 'Dashboard',
+    'console.nav.students': 'Students',
+    'console.nav.catalog': 'Levels',
+    'console.nav.builder': 'Level Builder',
+
+    // Console — cohorts (Instructor Mode)
+    'console.cohorts.new': 'New cohort',
+    'console.cohorts.name': 'Cohort name',
+    'console.cohorts.namePlaceholder': 'e.g. NGFW Bootcamp Q3',
+    'console.cohorts.track': 'Assigned track',
+    'console.cohorts.changeTrack': 'Change cohort track',
+    'console.cohorts.add': 'Create',
+    'console.cohorts.delete': 'Delete cohort',
+    'console.cohorts.empty': 'No cohorts yet. Create the first one to assign a track.',
+    'console.cohorts.listAria': 'Cohort list',
+    'console.cohorts.levels': 'levels in track',
+
+    // Console — level catalog
+    'console.catalog.levels': 'levels',
+    'console.catalog.aria': 'Level catalog with SME review status',
+    'console.sme.verified': 'Verified',
+    'console.sme.corrected': 'Corrected',
+    'console.sme.pending': 'Pending nuance',
+
+    // Console — Level Builder
+    'console.builder.meta': 'Metadata',
+    'console.builder.texts': 'Bilingual text (ES / EN)',
+    'console.builder.policy': 'Packet and solution',
+    'console.builder.titleEs': 'Title (ES)',
+    'console.builder.titleEn': 'Title (EN)',
+    'console.builder.descEs': 'Description (ES)',
+    'console.builder.descEn': 'Description (EN)',
+    'console.builder.hintEs': 'Hint (ES)',
+    'console.builder.hintEn': 'Hint (EN)',
+    'console.builder.explEs': 'Explanation (ES)',
+    'console.builder.explEn': 'Explanation (EN)',
+    'console.builder.validate': 'Validate level',
+    'console.builder.valid': '✓ Valid level: the solution wins in the engine',
+    'console.builder.invalid': 'Invalid level',
+    'console.builder.missing': 'Missing fields',
+    'console.builder.engine': 'The engine rejects the solution',
+    'console.builder.copy': 'Copy JSON',
+    'console.builder.download': 'Download JSON',
   },
 };

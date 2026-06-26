@@ -1,16 +1,30 @@
-import { Shield, ArrowLeft, LayoutDashboard } from 'lucide-react';
+import { useState } from 'react';
+import { Shield, ArrowLeft, LayoutDashboard, Users, ListChecks, Wand2 } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { navigateTo } from '../hooks/useHashRoute.js';
 import ConsoleDashboard from '../components/console/ConsoleDashboard.jsx';
+import StudentList from '../components/console/StudentList.jsx';
+import LevelCatalog from '../components/console/LevelCatalog.jsx';
+import LevelBuilder from '../components/console/LevelBuilder.jsx';
+
+// Vistas de la consola. Cada entrada: id, icono, clave i18n y componente.
+const VIEWS = [
+  { id: 'dashboard', icon: LayoutDashboard, labelKey: 'console.nav.dashboard', Component: ConsoleDashboard },
+  { id: 'students', icon: Users, labelKey: 'console.nav.students', Component: StudentList },
+  { id: 'catalog', icon: ListChecks, labelKey: 'console.nav.catalog', Component: LevelCatalog },
+  { id: 'builder', icon: Wand2, labelKey: 'console.nav.builder', Component: LevelBuilder },
+];
 
 /**
- * Console — shell de pantalla completa de la Management Console (ruta '#/console').
- *
- * En Sprint 2 expone una sola vista (Dashboard de analítica). Las vistas
- * Alumnos / Niveles / Level Builder llegan en Sprint 3 reutilizando este shell.
+ * Console — shell de pantalla completa de la Management Console ('#/console').
+ * Conmuta entre Dashboard, Alumnos (cohorts), Catálogo de niveles y Level Builder.
  */
 export default function Console() {
   const { t } = useI18n();
+  const [view, setView] = useState('dashboard');
+
+  const active = VIEWS.find((v) => v.id === view) ?? VIEWS[0];
+  const ActiveComponent = active.Component;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex flex-col">
@@ -39,22 +53,30 @@ export default function Console() {
       {/* Cuerpo: nav lateral + contenido */}
       <div className="flex-1 flex overflow-hidden">
         {/* Nav lateral de la consola */}
-        <nav className="w-48 bg-slate-900 border-r border-slate-800 py-4 px-2 shrink-0">
+        <nav className="w-48 bg-slate-900 border-r border-slate-800 py-4 px-2 shrink-0 space-y-1">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-3 mb-2">
             {t('console.title')}
           </div>
-          <button
-            type="button"
-            className="flex items-center gap-2 w-full text-left px-3 py-2 rounded text-xs text-slate-200 bg-slate-800 border-l-2 border-orange-500"
-            aria-current="page"
-          >
-            <LayoutDashboard size={14} aria-hidden="true" /> {t('console.nav.dashboard')}
-          </button>
+          {VIEWS.map(({ id, icon: Icon, labelKey }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setView(id)}
+              aria-current={view === id ? 'page' : undefined}
+              className={`flex items-center gap-2 w-full text-left px-3 py-2 rounded text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+                view === id
+                  ? 'text-slate-200 bg-slate-800 border-l-2 border-orange-500'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              <Icon size={14} aria-hidden="true" /> {t(labelKey)}
+            </button>
+          ))}
         </nav>
 
         {/* Contenido principal */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <ConsoleDashboard />
+          <ActiveComponent />
         </main>
       </div>
     </div>
