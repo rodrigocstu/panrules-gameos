@@ -2,7 +2,8 @@ name: Build and Deploy to GitHub Pages
 
 # Construye la app Vite y la publica en GitHub Pages en cada push a main.
 # Reemplaza el deploy manual `npm run deploy` (gh-pages).
-# Requisito: Settings -> Pages -> Source: GitHub Actions.
+# Pages se habilita solo desde el workflow (configure-pages enablement: true);
+# no requiere tocar Settings -> Pages manualmente.
 
 on:
   push:
@@ -28,7 +29,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # node 24 = npm 11, igual que el entorno donde se generó package-lock.json.
+          # (node 20/22 traen npm 10 y rompen `npm ci` por resolución de peer-deps.)
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
@@ -42,6 +45,10 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Habilita GitHub Pages (build_type: workflow) si aún no lo está,
+          # evitando el paso manual en Settings -> Pages.
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
