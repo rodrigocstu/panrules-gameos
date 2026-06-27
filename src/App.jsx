@@ -76,6 +76,9 @@ export default function FirewallNGFW() {
   // reasonCode del último veredicto (T2.7): permite mostrar la microlección
   // específica del fallo en el ExplanationPanel del resultado.
   const [reasonCode, setReasonCode] = useState(null);
+  // Snapshot de la config single-rule enviada en el último commit (S4): el
+  // Adaptive Policy Tutor la compara con la solución para dar feedback.
+  const [lastConfig, setLastConfig] = useState(null);
 
   // Policy State (nivel single-rule)
   const [ruleName, setRuleName] = useState('Rule-1');
@@ -119,9 +122,12 @@ export default function FirewallNGFW() {
     if (isMultiRule) {
       // Multi-rule: evaluar con evaluateOrdered
       if (!multiRules || multiRules.length === 0) return;
+      setLastConfig(null); // el tutor solo aplica a niveles single-rule
       startCommit(level, multiRules[0], { multiRules, useOrdered: true });
     } else {
-      startCommit(level, { srcZone, dstZone, app, service, action, nat: natType, profile });
+      const config = { srcZone, dstZone, app, service, action, nat: natType, profile };
+      setLastConfig(config);
+      startCommit(level, config);
     }
   };
 
@@ -204,6 +210,7 @@ export default function FirewallNGFW() {
               level={level}
               reasonCode={reasonCode}
               ruleName={ruleName}
+              config={lastConfig}
               onNext={nextLevel}
               onReconfigure={() => setGameState('idle')}
             />

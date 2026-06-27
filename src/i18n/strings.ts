@@ -237,6 +237,23 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'console.builder.engine': 'El motor rechaza la solución',
     'console.builder.copy': 'Copiar JSON',
     'console.builder.download': 'Descargar JSON',
+
+    // Adaptive Policy Tutor (5.1)
+    'tutor.title': 'Tutor de políticas',
+    'tutor.noDiff': 'Tu política coincide con la solución en los campos clave; revisa el orden o el detalle del escenario.',
+    'tutor.askAi': 'Pedir explicación al tutor IA',
+    'tutor.thinking': 'El tutor está analizando…',
+    'tutor.aiError': 'El tutor IA no está disponible ahora; usa el análisis de arriba.',
+    'tutor.fix.srcZone': 'Zona origen: cambiaste a "{your}", pero la regla debe usar "{correct}".',
+    'tutor.fix.dstZone': 'Zona destino: pusiste "{your}". En PAN-OS la Security Policy usa la zona post-NAT: debe ser "{correct}".',
+    'tutor.fix.app': 'App-ID: elegiste "{your}". App-ID inspecciona el contenido real, no el puerto: usa "{correct}".',
+    'tutor.fix.service': 'Servicio: "{your}" no es correcto. Debe ser "{correct}" para acotar los puertos permitidos.',
+    'tutor.fix.action': 'Acción: configuraste "{your}", pero el escenario requiere "{correct}".',
+    'tutor.fix.nat': 'NAT: usaste "{your}". El NAT Rulebase es una tabla aparte: este escenario necesita "{correct}".',
+    'tutor.fix.profile': 'Perfil de seguridad: "{your}" es insuficiente. Aplica al menos "{correct}" para inspeccionar el tráfico permitido.',
+
+    // MITRE ATT&CK Mapper (5.2)
+    'mitre.title': 'MITRE ATT&CK · técnica bloqueada',
   },
 
   en: {
@@ -455,5 +472,22 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
     'console.builder.engine': 'The engine rejects the solution',
     'console.builder.copy': 'Copy JSON',
     'console.builder.download': 'Download JSON',
+
+    // Adaptive Policy Tutor (5.1)
+    'tutor.title': 'Policy Tutor',
+    'tutor.noDiff': 'Your policy matches the solution on the key fields; review the order or the scenario detail.',
+    'tutor.askAi': 'Ask the AI tutor for an explanation',
+    'tutor.thinking': 'The tutor is analyzing…',
+    'tutor.aiError': 'The AI tutor is unavailable right now; use the analysis above.',
+    'tutor.fix.srcZone': 'Source zone: you set "{your}", but the rule must use "{correct}".',
+    'tutor.fix.dstZone': 'Destination zone: you set "{your}". In PAN-OS the Security Policy uses the post-NAT zone: it must be "{correct}".',
+    'tutor.fix.app': 'App-ID: you chose "{your}". App-ID inspects actual content, not the port: use "{correct}".',
+    'tutor.fix.service': 'Service: "{your}" is not correct. It must be "{correct}" to scope the allowed ports.',
+    'tutor.fix.action': 'Action: you set "{your}", but the scenario requires "{correct}".',
+    'tutor.fix.nat': 'NAT: you used "{your}". The NAT Rulebase is a separate table: this scenario needs "{correct}".',
+    'tutor.fix.profile': 'Security profile: "{your}" is insufficient. Apply at least "{correct}" to inspect the allowed traffic.',
+
+    // MITRE ATT&CK Mapper (5.2)
+    'mitre.title': 'MITRE ATT&CK · technique blocked',
   },
 };

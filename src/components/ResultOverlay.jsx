@@ -1,6 +1,8 @@
 import { CheckCircle, ShieldCheck, AlertTriangle, ArrowRight, RefreshCw } from 'lucide-react';
 import ExplanationPanel from './ExplanationPanel.jsx';
 import SetCommandPanel from './SetCommandPanel.jsx';
+import MitrePanel from './MitrePanel.jsx';
+import PolicyTutor from './PolicyTutor.jsx';
 import { resolveExplanation } from '../lib/explanations';
 import { useI18n } from '../i18n/I18nContext.jsx';
 
@@ -22,6 +24,7 @@ export default function ResultOverlay({
   level,
   reasonCode,
   ruleName,
+  config,
   onNext,
   onReconfigure,
 }) {
@@ -75,6 +78,12 @@ export default function ResultOverlay({
         <h3 className="text-2xl font-bold text-white mb-2">{heading}</h3>
         <p className="text-sm text-slate-300 mb-3 leading-relaxed">{reasonText}</p>
         <ExplanationPanel text={explanation} title={t('result.why')} />
+        {/* MITRE ATT&CK Mapper (5.2): al ganar, qué técnica ofensiva se bloqueó. */}
+        {isSuccess && level && <MitrePanel levelId={level.id} />}
+        {/* Adaptive Policy Tutor (5.1): al fallar, qué corregir (offline + IA opcional). */}
+        {!isSuccess && config && (
+          <PolicyTutor level={level} config={config} reasonCode={reasonCode} />
+        )}
         {/* Puente a PAN-OS real (T3.4): el comando set solo al acertar. */}
         {isSuccess && <SetCommandPanel level={level} ruleName={ruleName} />}
         {isSuccess ? (
