@@ -13,12 +13,13 @@ import { useState, useEffect, useCallback } from 'react';
 export function parseRoute(hash) {
   const clean = (hash || '').replace(/^#\/?/, '').split('?')[0];
   if (clean === 'console') return 'console';
+  if (clean === 'warroom') return 'warroom';
   return 'game';
 }
 
 export function navigateTo(name) {
   if (typeof window === 'undefined') return;
-  window.location.hash = name === 'console' ? '#/console' : '#/';
+  window.location.hash = name === 'game' ? '#/' : `#/${name}`;
 }
 
 export function useHashRoute() {

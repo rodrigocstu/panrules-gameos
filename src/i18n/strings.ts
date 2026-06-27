@@ -254,6 +254,34 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
 
     // MITRE ATT&CK Mapper (5.2)
     'mitre.title': 'MITRE ATT&CK · técnica bloqueada',
+
+    // Collaborative War Room (5.3)
+    'warroom.title': 'War Room',
+    'warroom.subtitle': 'Sesión colaborativa · multi-pestaña, mismo origen',
+    'warroom.join': 'Unirse a la sala',
+    'warroom.name': 'Tu nombre',
+    'warroom.namePlaceholder': 'Ej: Ana',
+    'warroom.role': 'Rol',
+    'warroom.role.security': 'Security Policy',
+    'warroom.role.nat': 'NAT',
+    'warroom.role.validator': 'Validador',
+    'warroom.role.instructor': 'Instructor',
+    'warroom.enter': 'Entrar',
+    'warroom.inRoom': 'Ya hay {count} jugador(es) en la sala.',
+    'warroom.players': 'Jugadores',
+    'warroom.you': 'tú',
+    'warroom.ticket': 'Ticket',
+    'warroom.policy': 'Política colaborativa',
+    'warroom.youEdit': 'Tú editas',
+    'warroom.commit': 'Commit y validar',
+    'warroom.onlyValidator': 'Solo el Validador o el Instructor pueden hacer commit',
+    'warroom.pause': 'Pausar',
+    'warroom.resume': 'Reanudar',
+    'warroom.pausedBanner': 'El instructor pausó la sesión: edición congelada.',
+    'warroom.newTicket': 'Nuevo ticket',
+    'warroom.result.win': '✓ Configuración correcta',
+    'warroom.result.fail': 'Configuración incorrecta',
+    'warroom.validatedBy': 'Validado por {name}',
   },
 
   en: {
@@ -489,5 +517,33 @@ export const STRINGS: Record<Lang, Record<string, string>> = {
 
     // MITRE ATT&CK Mapper (5.2)
     'mitre.title': 'MITRE ATT&CK · technique blocked',
+
+    // Collaborative War Room (5.3)
+    'warroom.title': 'War Room',
+    'warroom.subtitle': 'Collaborative session · multi-tab, same origin',
+    'warroom.join': 'Join the room',
+    'warroom.name': 'Your name',
+    'warroom.namePlaceholder': 'e.g. Ana',
+    'warroom.role': 'Role',
+    'warroom.role.security': 'Security Policy',
+    'warroom.role.nat': 'NAT',
+    'warroom.role.validator': 'Validator',
+    'warroom.role.instructor': 'Instructor',
+    'warroom.enter': 'Enter',
+    'warroom.inRoom': '{count} player(s) already in the room.',
+    'warroom.players': 'Players',
+    'warroom.you': 'you',
+    'warroom.ticket': 'Ticket',
+    'warroom.policy': 'Collaborative policy',
+    'warroom.youEdit': 'You edit',
+    'warroom.commit': 'Commit & validate',
+    'warroom.onlyValidator': 'Only the Validator or Instructor can commit',
+    'warroom.pause': 'Pause',
+    'warroom.resume': 'Resume',
+    'warroom.pausedBanner': 'The instructor paused the session: editing frozen.',
+    'warroom.newTicket': 'New ticket',
+    'warroom.result.win': '✓ Correct configuration',
+    'warroom.result.fail': 'Incorrect configuration',
+    'warroom.validatedBy': 'Validated by {name}',
   },
 };

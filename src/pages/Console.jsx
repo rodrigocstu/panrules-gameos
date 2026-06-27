@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, ArrowLeft, LayoutDashboard, Users, ListChecks, Wand2 } from 'lucide-react';
+import { Shield, ArrowLeft, LayoutDashboard, Users, ListChecks, Wand2, Swords } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { navigateTo } from '../hooks/useHashRoute.js';
 import ConsoleDashboard from '../components/console/ConsoleDashboard.jsx';
@@ -72,6 +72,14 @@ export default function Console() {
               <Icon size={14} aria-hidden="true" /> {t(labelKey)}
             </button>
           ))}
+          {/* Lanzador del War Room (pantalla completa, ruta aparte) */}
+          <button
+            type="button"
+            onClick={() => navigateTo('warroom')}
+            className="flex items-center gap-2 w-full text-left px-3 py-2 mt-2 rounded text-xs text-slate-400 hover:text-orange-300 hover:bg-slate-800/50 border-t border-slate-800 pt-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+          >
+            <Swords size={14} aria-hidden="true" /> {t('warroom.title')}
+          </button>
         </nav>
 
         {/* Contenido principal */}

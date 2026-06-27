@@ -30,6 +30,10 @@ describe('parseRoute', () => {
     expect(parseRoute('#/')).toBe('game');
   });
 
+  it('reconoce #/warroom como ruta warroom', () => {
+    expect(parseRoute('#/warroom')).toBe('warroom');
+  });
+
   it('devuelve game para rutas desconocidas', () => {
     expect(parseRoute('#/whatever')).toBe('game');
   });
@@ -50,6 +54,11 @@ describe('navigateTo', () => {
     window.location.hash = '#/console';
     navigateTo('game');
     expect(window.location.hash).toBe('#/');
+  });
+
+  it('pone el hash en #/warroom al navegar a warroom', () => {
+    navigateTo('warroom');
+    expect(window.location.hash).toBe('#/warroom');
   });
 });
 
