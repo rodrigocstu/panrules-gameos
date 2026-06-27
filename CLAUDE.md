@@ -54,6 +54,27 @@ Separar en:
 - **New components:** `MultiRuleEditor`, `ShadowWarning`, `CertTrackFilter` (en LevelSelect)
 - **208+ tests verdes**
 
+## v4.0 — Management Console + Disruptivos (2026-06-26)
+
+Plan PMI/PMBOK v8 en 6 sprints. Detalle en `docs/project-plan.md` y `docs/risk-register.md`.
+
+- **Routing por hash** (`src/hooks/useHashRoute.js`, sin deps): `#/console`, `#/warroom`, resto = juego.
+  `src/Root.jsx` conmuta y monta `ErrorBoundary` global. `navigateTo(name)` actualiza el hash.
+- **Management Console** (`src/pages/Console.jsx`, 5 vistas):
+  - `ConsoleDashboard` + `HeatMap` — analítica derivada del progreso real (`useConsoleData`); dificultad observada por intentos.
+  - `StudentList` — cohorts en localStorage (`useCohorts`) + asignación de track.
+  - `LevelCatalog` — 43 niveles con estado SME (`src/data/sme-status.ts`, derivado de `accuracy-review.md`).
+  - `LevelBuilder` — WYSIWYG → Level JSON; valida contra el motor (`src/lib/levelDraft.js`: la solución debe ganar).
+  - `ConsoleSettings` — telemetría opt-in + export CSV + SLO dashboard.
+- **Disruptivos:**
+  - **Adaptive Policy Tutor** (`PolicyTutor.jsx` + `src/lib/tutor.js`): feedback offline campo-por-campo; IA opcional vía `VITE_TUTOR_URL` (`functions/tutor.js`, CF Worker con `@anthropic-ai/sdk`, `claude-haiku-4-5`). Offline-first.
+  - **MITRE ATT&CK Mapper** (`MitrePanel.jsx` + `src/data/mitre-map.ts`): al ganar, técnica ATT&CK bloqueada (16 niveles, TIDs reales).
+  - **Collaborative War Room** (`WarRoom.jsx` + `src/hooks/useWarRoomState.js`): multi-pestaña vía **BroadcastChannel** + fallback localStorage; roles con permisos, instructor pausa/inyecta ticket.
+- **Telemetría anónima opt-in** (`src/lib/telemetry.js`): agregados locales (sin PII, sin red), OFF por defecto.
+- **Gate axe-core** corre en `npm test` (`src/test/a11y.test.jsx`, WCAG 2 A/AA, color-contrast → Lighthouse).
+  **Lighthouse CI** en `.github/workflows/lighthouse.yml` (PR + manual, no bloquea el deploy a main).
+- **429 tests verdes**. **Móvil EXCLUIDO** (decisión R-03).
+
 ## Invariantes / "gotchas" (NO reintroducir estos bugs)
 
 El motor de validación es el corazón del juego; al tocarlo, respetar:

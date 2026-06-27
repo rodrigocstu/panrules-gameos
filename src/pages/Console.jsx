@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Shield, ArrowLeft, LayoutDashboard, Users, ListChecks, Wand2, Swords } from 'lucide-react';
+import { Shield, ArrowLeft, LayoutDashboard, Users, ListChecks, Wand2, Swords, Settings } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext.jsx';
 import { navigateTo } from '../hooks/useHashRoute.js';
 import ConsoleDashboard from '../components/console/ConsoleDashboard.jsx';
 import StudentList from '../components/console/StudentList.jsx';
 import LevelCatalog from '../components/console/LevelCatalog.jsx';
 import LevelBuilder from '../components/console/LevelBuilder.jsx';
+import ConsoleSettings from '../components/console/ConsoleSettings.jsx';
 
 // Vistas de la consola. Cada entrada: id, icono, clave i18n y componente.
 const VIEWS = [
@@ -13,6 +14,7 @@ const VIEWS = [
   { id: 'students', icon: Users, labelKey: 'console.nav.students', Component: StudentList },
   { id: 'catalog', icon: ListChecks, labelKey: 'console.nav.catalog', Component: LevelCatalog },
   { id: 'builder', icon: Wand2, labelKey: 'console.nav.builder', Component: LevelBuilder },
+  { id: 'settings', icon: Settings, labelKey: 'console.nav.settings', Component: ConsoleSettings },
 ];
 
 /**

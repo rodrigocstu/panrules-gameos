@@ -5,6 +5,7 @@ import { usePacketAnimation } from './hooks/usePacketAnimation.js';
 import { useProgress } from './hooks/useProgress.js';
 import { useDragResize } from './hooks/useDragResize.js';
 import { evaluateOrdered } from './lib/firewall-engine';
+import { recordResultEvent } from './lib/telemetry.js';
 import TopBar from './components/TopBar.jsx';
 import Sidebar from './components/Sidebar.jsx';
 import NetworkVisualizer from './components/NetworkVisualizer.jsx';
@@ -108,6 +109,9 @@ export default function FirewallNGFW() {
 
     // Registrar intento, completado, puntuación y racha en una transición (T3.7).
     recordResult(level.id, isWin);
+
+    // Telemetría anónima agregada (WBS 6.3): no-op salvo opt-in del usuario.
+    recordResultEvent({ tier: level.tier ?? 'F', isWin, reasonCode: code ?? null });
   };
 
   // La animación y sus timers viven en el hook (cleanup garantizado, invariante #7).
