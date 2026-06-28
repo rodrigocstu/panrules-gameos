@@ -129,6 +129,9 @@ resuelve hacia DMZ → la Security Policy usa **dst zone = DMZ (post-NAT)** con 
 - **L43 (NIST CSF):** usa **PR.AC-4**, identificador de NIST CSF **1.1**. Si el material apunta a
   CSF **2.0** (como el curriculum), el control equivalente es **PR.AA-05**. Mismatch de versión.
 
+> **Dossier SME (R-04):** análisis grounded por nivel + veredictos **PROPUESTOS** (pendientes de
+> firma del autor) en [sme-dossier-R04.md](sme-dossier-R04.md). Los 4 niveles siguen `pending`.
+
 ### 🔵 MENORES (datos del escenario, no del comportamiento PAN-OS)
 
 - **L15:** el `desc` menciona WiFi `10.1.2.0/24` pero `srcIp=10.1.1.200` (pertenece a la LAN).
