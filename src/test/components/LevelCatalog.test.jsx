@@ -30,9 +30,9 @@ describe('LevelCatalog — filtro por track', () => {
 });
 
 describe('LevelCatalog — estado SME', () => {
-  it('muestra el conteo de matices pendientes', () => {
+  it('no muestra matices pendientes tras el sign-off SME (R-04 cerrado)', () => {
     renderWithI18n(<LevelCatalog />);
-    // 4 niveles con matiz pendiente (L25/L34/L38/L43)
-    expect(screen.getByText(/4 matiz pendiente/i)).toBeInTheDocument();
+    // L25/L34/L38/L43 corregidos (Rodrigo, sign-off 2026-06-28); ya no hay pendientes
+    expect(screen.queryByText(/matiz pendiente/i)).not.toBeInTheDocument();
   });
 });

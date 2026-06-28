@@ -1091,8 +1091,8 @@ export const LEVELS: Level[] = [
       en: 'Decryption Policy: SSL Forward Proxy for HTTPS inspection',
     },
     desc: {
-      es: 'Usuarios de Trust navegan por HTTPS hacia Internet. Sin Decryption Policy, App-ID solo ve "ssl" — no puede identificar si es YouTube, Gmail o malware dentro del SSL. El SSL Forward Proxy descifra, inspecciona y re-cifra. Para que la inspección sea efectiva se requiere el perfil "strict".',
-      en: 'Trust users browse HTTPS to the Internet. Without a Decryption Policy, App-ID only sees "ssl" — it cannot identify if it\'s YouTube, Gmail or malware inside SSL. SSL Forward Proxy decrypts, inspects and re-encrypts. For effective inspection, the "strict" profile is required.',
+      es: 'Usuarios de Trust navegan por HTTPS hacia Internet. Sin Decryption Policy, App-ID aún identifica muchas apps HTTPS por el SNI del ClientHello y el certificado TLS (p. ej. linkedin-base, facebook-base) — lo que NO puede hacer sin descifrar es inspeccionar el contenido: amenazas, URL completa, archivos o sub-apps anidadas. El SSL Forward Proxy descifra, inspecciona y re-cifra. Para que la inspección sea efectiva se requiere el perfil "strict".',
+      en: 'Trust users browse HTTPS to the Internet. Without a Decryption Policy, App-ID still identifies many HTTPS apps by the ClientHello SNI and the TLS certificate (e.g. linkedin-base, facebook-base) — what it CANNOT do without decryption is inspect the content: threats, full URL, files or nested sub-apps. SSL Forward Proxy decrypts, inspects and re-encrypts. For effective inspection, the "strict" profile is required.',
     },
     packet: {
       srcZone: 'trust',
@@ -1142,12 +1142,12 @@ export const LEVELS: Level[] = [
       };
     },
     hint: {
-      es: 'El Decryption rulebase de PAN-OS es una tercera tabla de reglas (además de Security y NAT) que controla qué tráfico SSL/TLS se descifra para inspección. Sin decryption, App-ID solo puede identificar "ssl" — no puede ver si dentro hay YouTube, malware, o exfiltración de datos. El SSL Forward Proxy requiere que el firewall actúe como CA intermedia y que los clientes confíen en su certificado.',
-      en: 'The PAN-OS Decryption rulebase is a third rules table (in addition to Security and NAT) that controls which SSL/TLS traffic is decrypted for inspection. Without decryption, App-ID can only identify "ssl" — it cannot see if inside is YouTube, malware, or data exfiltration. SSL Forward Proxy requires the firewall to act as intermediate CA and clients to trust its certificate.',
+      es: 'El Decryption rulebase de PAN-OS es una tercera tabla de reglas (además de Security y NAT) que controla qué tráfico SSL/TLS se descifra para inspección. Sin decryption, App-ID todavía identifica muchas apps HTTPS por el SNI y el certificado TLS (p. ej. linkedin-base, facebook-base); lo que el descifrado habilita es el Content-ID (Threat Prevention, WildFire, URL Filtering sobre la ruta completa) y el App-ID completo sobre sub-apps anidadas o evasivas. El SSL Forward Proxy requiere que el firewall actúe como CA intermedia y que los clientes confíen en su certificado.',
+      en: 'The PAN-OS Decryption rulebase is a third rules table (in addition to Security and NAT) that controls which SSL/TLS traffic is decrypted for inspection. Without decryption, App-ID still identifies many HTTPS apps by SNI and the TLS certificate (e.g. linkedin-base, facebook-base); what decryption unlocks is Content-ID (Threat Prevention, WildFire, URL Filtering over the full path) and full App-ID over nested or evasive sub-apps. SSL Forward Proxy requires the firewall to act as intermediate CA and clients to trust its certificate.',
     },
     explanation: {
-      es: 'Para tráfico HTTPS saliente, el perfil "strict" con URL Filtering y WildFire es el mínimo recomendado, pero sin Decryption Policy, esa inspección es limitada — App-ID ve "ssl" pero no el contenido. En producción, implementa SSL Forward Proxy para toda la navegación web saliente y SSL Inbound Inspection para los servidores publicados en DMZ. Es un componente fundamental del examen NGFW Engineer.',
-      en: 'For outbound HTTPS traffic, the "strict" profile with URL Filtering and WildFire is the minimum recommended, but without a Decryption Policy, that inspection is limited — App-ID sees "ssl" but not the content. In production, implement SSL Forward Proxy for all outbound web browsing and SSL Inbound Inspection for DMZ published servers. It is a fundamental component of the NGFW Engineer exam.',
+      es: 'Para tráfico HTTPS saliente, el perfil "strict" con URL Filtering y WildFire es el mínimo recomendado, pero sin Decryption Policy esa inspección es limitada — App-ID identifica la app por SNI/certificado, pero no ve el contenido (amenazas, URL completa, archivos) sin descifrar. En producción, implementa SSL Forward Proxy para toda la navegación web saliente y SSL Inbound Inspection para los servidores publicados en DMZ. Es un componente fundamental del examen NGFW Engineer.',
+      en: 'For outbound HTTPS traffic, the "strict" profile with URL Filtering and WildFire is the minimum recommended, but without a Decryption Policy that inspection is limited — App-ID identifies the app by SNI/certificate, but cannot see the content (threats, full URL, files) without decrypting. In production, implement SSL Forward Proxy for all outbound web browsing and SSL Inbound Inspection for DMZ published servers. It is a fundamental component of the NGFW Engineer exam.',
     },
   },
   {
@@ -1540,8 +1540,8 @@ export const LEVELS: Level[] = [
       packetLabel: '10.1.1.10',
     },
     hint: {
-      es: 'La separación del management plane del data plane es un principio fundamental de seguridad en redes: el acceso de administración al firewall (SSH, HTTPS, SNMP) debe ocurrir exclusivamente por una interfaz dedicada (el puerto MGT) conectada a una red de gestión aislada (OOB - Out-of-Band). Permitir administración in-band expone el control del firewall al mismo tráfico que está inspeccionando.',
-      en: 'Separating the management plane from the data plane is a fundamental network security principle: firewall administration access (SSH, HTTPS, SNMP) must occur exclusively through a dedicated interface (the MGT port) connected to an isolated management network (OOB - Out-of-Band). Allowing in-band administration exposes firewall control to the same traffic it is inspecting.',
+      es: 'La separación del management plane del data plane es un principio fundamental de seguridad: el acceso de administración al firewall (SSH, HTTPS, SNMP) debe ocurrir exclusivamente por el puerto MGT dedicado, conectado a una red de gestión aislada (OOB - Out-of-Band). En PAN-OS real el puerto MGT no se asigna a una zona de seguridad ni lo evalúa el security rulebase de zonas: su acceso se restringe con Permitted IP Addresses y los Management Interface Settings (Device > Setup > Management), que definen qué servicios (SSH/HTTPS/SNMP) se exponen y desde qué IPs — no con una Security Policy a una zona "management". La "zona management" de este simulador es una representación didáctica del plano separado.',
+      en: 'Separating the management plane from the data plane is a fundamental security principle: firewall administration access (SSH, HTTPS, SNMP) must occur exclusively through the dedicated MGT port, connected to an isolated management network (OOB - Out-of-Band). In real PAN-OS the MGT port is not assigned to a security zone and is not evaluated by the zone-based security rulebase: its access is restricted with Permitted IP Addresses and the Management Interface Settings (Device > Setup > Management), which define which services (SSH/HTTPS/SNMP) are exposed and from which IPs — not with a Security Policy to a "management" zone. The "management" zone in this simulator is a didactic representation of the separated plane.',
     },
     explanation: {
       es: 'Si un atacante compromete la red Trust (data plane) y la administración del firewall es accesible in-band, puede intentar ataques de credential stuffing contra la consola de gestión. El OOB management elimina esta superficie de ataque: un atacante que controla el data plane no puede alcanzar el management plane porque están en redes físicamente separadas. En PAN-OS, el puerto MGT tiene su propia tabla de routing y no comparte interfaces con el data plane.',
@@ -1685,12 +1685,12 @@ export const LEVELS: Level[] = [
     tier: 'A',
     tracks: ['netsec-architect'],
     title: {
-      es: 'HA failover: Floating IP y Gratuitous ARP',
-      en: 'HA failover: Floating IP and Gratuitous ARP',
+      es: 'HA failover Active-Passive: IP/MAC compartida y Gratuitous ARP',
+      en: 'HA failover Active-Passive: shared IP/MAC and Gratuitous ARP',
     },
     desc: {
-      es: 'En HA Active-Passive, cuando el firewall activo falla y el pasivo toma el control, los dispositivos de red necesitan saber que la IP flotante ahora está en otro puerto. El mecanismo: el nuevo firewall activo envía un Gratuitous ARP (GARP) forzando a switches y routers a actualizar sus tablas ARP y CAM inmediatamente.',
-      en: 'In Active-Passive HA, when the active firewall fails and the passive takes over, network devices need to know the floating IP is now on another port. The mechanism: the new active firewall sends a Gratuitous ARP (GARP) forcing switches and routers to immediately update their ARP and CAM tables.',
+      es: 'En HA Active-Passive, los dos miembros del par comparten la misma IP y la misma MAC virtual (derivada del HA Group ID) en las interfaces de datos. Cuando el firewall activo falla y el pasivo toma el control, este asume el rol activo y envía un Gratuitous ARP (GARP) forzando a switches y routers a actualizar sus tablas ARP y CAM inmediatamente. La IP y la MAC no cambian en el failover: solo cambia el puerto físico que responde por ellas.',
+      en: 'In Active-Passive HA, both members of the pair share the same IP and the same virtual MAC (derived from the HA Group ID) on the data interfaces. When the active firewall fails and the passive takes over, it assumes the active role and sends a Gratuitous ARP (GARP) forcing switches and routers to immediately update their ARP and CAM tables. The IP and MAC do not change on failover: only the physical port that answers for them changes.',
     },
     packet: {
       srcZone: 'untrust',
@@ -1716,12 +1716,12 @@ export const LEVELS: Level[] = [
       packetLabel: 'DNAT: 10.1.1.100',
     },
     hint: {
-      es: 'En PAN-OS HA, las Floating IPs son IPs asignadas al firewall activo que se mueven al pasivo en caso de failover. Al hacerse activo, el nuevo firewall envía Gratuitous ARP (GARP) para anunciar que esas IPs ahora están en su MAC. Los dispositivos de red actualizan su ARP cache y las tablas CAM de los switches. Para entornos Layer 3 con routing, se usa route injection en lugar de GARP.',
-      en: 'In PAN-OS HA, Floating IPs are IPs assigned to the active firewall that move to the passive on failover. Upon becoming active, the new firewall sends Gratuitous ARP (GARP) to announce those IPs are now on its MAC. Network devices update their ARP cache and switch CAM tables. For Layer 3 environments with routing, route injection is used instead of GARP.',
+      es: 'En HA Active-Passive, el par comparte la misma IP y una MAC virtual común (derivada del HA Group ID) en las interfaces de datos; la MAC no cambia en el failover. Al hacerse activo, el nuevo firewall envía Gratuitous ARP (GARP) para que los dispositivos de red refresquen su ARP cache y las tablas CAM de los switches y reenvíen el tráfico por el puerto correcto. (El término "Floating IP" pertenece a HA Active-Active, no a Active-Passive.) Para entornos Layer 3 con routing, se usa route injection en lugar de GARP.',
+      en: 'In Active-Passive HA, the pair shares the same IP and a common virtual MAC (derived from the HA Group ID) on the data interfaces; the MAC does not change on failover. Upon becoming active, the new firewall sends Gratuitous ARP (GARP) so network devices refresh their ARP cache and switch CAM tables and forward traffic out the correct port. ("Floating IP" is an Active-Active term, not Active-Passive.) For Layer 3 environments with routing, route injection is used instead of GARP.',
     },
     explanation: {
-      es: 'El tiempo de failover en HA Active-Passive incluye: detección del fallo (timeout de heartbeats, ~1-3 segundos), switchover del peer, y convergencia de red (ARP cache update en dispositivos downstream, ~milisegundos con GARP). Sin GARP, los dispositivos seguirían enviando tráfico a la MAC del firewall caído hasta que expirase su ARP cache (típicamente 20 minutos). El GARP fuerza la actualización inmediata.',
-      en: 'Failover time in Active-Passive HA includes: failure detection (heartbeat timeout, ~1-3 seconds), peer switchover, and network convergence (ARP cache update on downstream devices, ~milliseconds with GARP). Without GARP, devices would keep sending traffic to the failed firewall\'s MAC until their ARP cache expired (typically 20 minutes). GARP forces immediate update.',
+      es: 'El tiempo de failover en HA Active-Passive incluye: detección del fallo (timeout de heartbeats, ~1-3 segundos), switchover del peer, y convergencia de red (actualización de ARP/CAM en dispositivos downstream, ~milisegundos con GARP). Como el par comparte IP y MAC virtual, sin GARP los switches seguirían reenviando el tráfico por el puerto del firewall caído (su entrada CAM) hasta que expirase (típicamente 20 minutos). El GARP fuerza la actualización inmediata hacia el puerto correcto.',
+      en: 'Failover time in Active-Passive HA includes: failure detection (heartbeat timeout, ~1-3 seconds), peer switchover, and network convergence (ARP/CAM update on downstream devices, ~milliseconds with GARP). Since the pair shares IP and virtual MAC, without GARP switches would keep forwarding traffic out the failed firewall\'s port (its CAM entry) until it expired (typically 20 minutes). GARP forces an immediate update to the correct port.',
     },
   },
   {
@@ -1905,12 +1905,12 @@ export const LEVELS: Level[] = [
     tier: 'A',
     tracks: ['netsec-architect'],
     title: {
-      es: 'Compliance: mapeo NIST CSF PR.AC-4 → PAN-OS',
-      en: 'Compliance: NIST CSF PR.AC-4 → PAN-OS mapping',
+      es: 'Compliance: mapeo NIST CSF PR.AC-4 (CSF 1.1) → PAN-OS',
+      en: 'Compliance: NIST CSF PR.AC-4 (CSF 1.1) → PAN-OS mapping',
     },
     desc: {
-      es: 'Un auditor pide evidencia del control NIST CSF PR.AC-4 (gestión de privilegios de acceso — least privilege). ¿Qué funcionalidad de PAN-OS evidencia este control? La Security Policy con App-ID específico (ssh) + User-ID (grupo AD) + zona exacta (Trust→DMZ) es evidencia directa de acceso controlado por identidad, no por IP. Configura la regla correcta.',
-      en: 'An auditor requests evidence of NIST CSF control PR.AC-4 (access privilege management — least privilege). What PAN-OS functionality evidences this control? Security Policy with specific App-ID (ssh) + User-ID (AD group) + exact zone (Trust→DMZ) is direct evidence of identity-controlled access, not IP-controlled. Configure the correct rule.',
+      es: 'Un auditor pide evidencia del control NIST CSF PR.AC-4 — gestión de privilegios de acceso (least privilege). Nota: PR.AC-4 es el identificador de NIST CSF 1.1; su equivalente en CSF 2.0 es PR.AA-05. ¿Qué funcionalidad de PAN-OS evidencia este control? La Security Policy con App-ID específico (ssh) + User-ID (grupo AD) + zona exacta (Trust→DMZ) es evidencia directa de acceso controlado por identidad, no por IP. Configura la regla correcta.',
+      en: 'An auditor requests evidence of NIST CSF control PR.AC-4 — access privilege management (least privilege). Note: PR.AC-4 is the NIST CSF 1.1 identifier; its CSF 2.0 equivalent is PR.AA-05. What PAN-OS functionality evidences this control? Security Policy with specific App-ID (ssh) + User-ID (AD group) + exact zone (Trust→DMZ) is direct evidence of identity-controlled access, not IP-controlled. Configure the correct rule.',
     },
     packet: {
       srcZone: 'trust',
@@ -1936,8 +1936,8 @@ export const LEVELS: Level[] = [
       packetLabel: '10.1.1.50',
     },
     hint: {
-      es: 'El NIST CSF PR.AC-4 requiere gestión de privilegios de acceso incorporando el principio de least privilege. PAN-OS lo implementa mediante: (1) Políticas de seguridad con User-ID que restringen acceso por grupo de AD, (2) Role-Based Access Control (RBAC) para administradores de Panorama/PAN-OS, (3) Privileged Access Management integrado con GlobalProtect. La combinación zona + User-ID + App-ID es evidencia directa de control de acceso granular.',
-      en: 'NIST CSF PR.AC-4 requires access privilege management incorporating the least privilege principle. PAN-OS implements this through: (1) Security Policies with User-ID restricting access by AD group, (2) Role-Based Access Control (RBAC) for Panorama/PAN-OS administrators, (3) Privileged Access Management integrated with GlobalProtect. The zone + User-ID + App-ID combination is direct evidence of granular access control.',
+      es: 'El NIST CSF PR.AC-4 (NIST CSF 1.1; equivalente en CSF 2.0: PR.AA-05) requiere gestión de privilegios de acceso incorporando el principio de least privilege. PAN-OS lo implementa mediante: (1) Políticas de seguridad con User-ID que restringen acceso por grupo de AD, (2) Role-Based Access Control (RBAC) para administradores de Panorama/PAN-OS, (3) Privileged Access Management integrado con GlobalProtect. La combinación zona + User-ID + App-ID es evidencia directa de control de acceso granular. (En CSF 2.0, PR.AA-05 consolida PR.AC-3 + PR.AC-4 de CSF 1.1; no es un renombrado 1:1.)',
+      en: 'NIST CSF PR.AC-4 (NIST CSF 1.1; CSF 2.0 equivalent: PR.AA-05) requires access privilege management incorporating the least privilege principle. PAN-OS implements this through: (1) Security Policies with User-ID restricting access by AD group, (2) Role-Based Access Control (RBAC) for Panorama/PAN-OS administrators, (3) Privileged Access Management integrated with GlobalProtect. The zone + User-ID + App-ID combination is direct evidence of granular access control. (In CSF 2.0, PR.AA-05 consolidates CSF 1.1\'s PR.AC-3 + PR.AC-4; it is not a 1:1 rename.)',
     },
     explanation: {
       es: 'Mapear controles de compliance a funcionalidades del producto es una competencia clave del NetSec Architect. NIST CSF Protect → PAN-OS: PR.AC (acceso) = Security Policy + User-ID + RBAC; PR.DS (seguridad de datos) = Decryption + File Blocking + DLP; PR.IP (procesos de protección) = Vulnerability Protection + WildFire. NIST CSF Detect → DE.CM (monitoreo continuo) = Cortex XDR + Log Forwarding + SIEM. Estos mappings son evaluados directamente en el examen NetSec Architect.',
