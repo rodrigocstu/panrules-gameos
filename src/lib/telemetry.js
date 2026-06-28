@@ -67,23 +67,54 @@ export function clearTelemetry() {
   }
 }
 
+// Suma un delta de evento sobre una base de contadores. Función pura y
+// commutativa: todos los campos son contadores aditivos, así que aplicar dos
+// deltas en cualquier orden produce el mismo agregado (merge idempotente por
+// evento). Exportada para que el test multi-pestaña pueda razonar sobre ella.
+export function mergeTelemetry(base, delta) {
+  const byReason = { ...base.byReason };
+  for (const [code, n] of Object.entries(delta.byReason ?? {})) {
+    byReason[code] = (byReason[code] ?? 0) + n;
+  }
+  const byTier = { ...base.byTier };
+  for (const [tier, tv] of Object.entries(delta.byTier ?? {})) {
+    const cur = byTier[tier] ?? { wins: 0, failures: 0 };
+    byTier[tier] = {
+      wins: cur.wins + (tv.wins ?? 0),
+      failures: cur.failures + (tv.failures ?? 0),
+    };
+  }
+  return {
+    totalCommits: base.totalCommits + (delta.totalCommits ?? 0),
+    wins: base.wins + (delta.wins ?? 0),
+    failures: base.failures + (delta.failures ?? 0),
+    byReason,
+    byTier,
+  };
+}
+
+// Aplica el delta de UN evento al valor PERSISTIDO actual: re-lee fresco desde
+// localStorage justo antes de escribir y suma el delta sobre ese valor (no sobre
+// un snapshot en memoria que puede estar viejo). Esto cierra la carrera
+// read-modify-write entre pestañas: si otra pestaña incrementó entre nuestra
+// lectura inicial y nuestra escritura, leemos su valor fresco y le sumamos el
+// nuestro en vez de pisarlo. Totalmente síncrono (sin red, sin async).
+export function applyTelemetryDelta(delta) {
+  write(mergeTelemetry(readTelemetry(), delta));
+}
+
 // Registra el resultado de un commit como agregado. No-op si no hay opt-in.
+// El evento se traduce a un delta aditivo y se aplica exactamente una vez sobre
+// el valor persistido fresco (read-fresh → add this delta → write).
 export function recordResultEvent({ tier = 'F', isWin, reasonCode }) {
   if (!isTelemetryEnabled()) return;
-  const data = readTelemetry();
-  data.totalCommits += 1;
-  if (isWin) data.wins += 1;
-  else data.failures += 1;
-
-  if (reasonCode) {
-    data.byReason[reasonCode] = (data.byReason[reasonCode] ?? 0) + 1;
-  }
-  const t = data.byTier[tier] ?? { wins: 0, failures: 0 };
-  if (isWin) t.wins += 1;
-  else t.failures += 1;
-  data.byTier[tier] = t;
-
-  write(data);
+  applyTelemetryDelta({
+    totalCommits: 1,
+    wins: isWin ? 1 : 0,
+    failures: isWin ? 0 : 1,
+    byReason: reasonCode ? { [reasonCode]: 1 } : {},
+    byTier: { [tier]: { wins: isWin ? 1 : 0, failures: isWin ? 0 : 1 } },
+  });
 }
 
 // Tasa de éxito global (0–100), o null si no hay datos.
