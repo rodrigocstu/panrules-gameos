@@ -3,9 +3,9 @@ import { smeStatusOf, SME_PENDING_IDS, SME_CORRECTED_IDS } from '../data/sme-sta
 import { LEVELS } from '../data/levels';
 
 describe('smeStatusOf', () => {
-  it('marca los 4 matices como pending', () => {
+  it('marca los 4 matices (L25/L34/L38/L43) como corrected tras el sign-off SME (R-04 cerrado)', () => {
     [25, 34, 38, 43].forEach((id) => {
-      expect(smeStatusOf(id)).toBe('pending');
+      expect(smeStatusOf(id)).toBe('corrected');
     });
   });
 
@@ -23,12 +23,12 @@ describe('smeStatusOf', () => {
 });
 
 describe('SME constants', () => {
-  it('hay exactamente 4 matices pendientes', () => {
-    expect(SME_PENDING_IDS).toHaveLength(4);
+  it('no quedan matices pendientes tras el sign-off SME (R-04 cerrado)', () => {
+    expect(SME_PENDING_IDS).toHaveLength(0);
   });
 
-  it('hay 4 niveles corregidos', () => {
-    expect(SME_CORRECTED_IDS).toHaveLength(4);
+  it('hay 8 niveles corregidos (4 de la auditoría + 4 del sign-off SME)', () => {
+    expect(SME_CORRECTED_IDS).toHaveLength(8);
   });
 
   it('todos los ids referenciados existen en LEVELS', () => {
