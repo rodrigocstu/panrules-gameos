@@ -9,6 +9,7 @@ import WarRoom from './components/WarRoom.jsx';
 import OnboardingFlow from './components/onboarding/OnboardingFlow';
 import AppShell from './components/shell/AppShell';
 import ProfileScreen from './components/shell/ProfileScreen';
+import HomeScreen from './components/shell/HomeScreen';
 import FirewallModule from './components/modules/firewall/FirewallModule';
 import NatModule from './components/modules/nat/NatModule';
 import PolicyModule from './components/modules/policy/PolicyModule';
@@ -69,8 +70,17 @@ export default function Root() {
       </AppShell>
     );
   } else if (route === 'home') {
-    // EGC-11: la home autenticada monta el módulo Firewall "El Portero". La ruta legacy
-    // 'game' (else) conserva el simulador de escritorio FirewallNGFW.
+    // EGC-19: la home autenticada es el overview del track Fundamentos (HomeScreen), no
+    // un módulo. El Portero (Firewall) pasa a su ruta propia 'firewall' (abajo). La ruta
+    // legacy 'game' (else) conserva el simulador de escritorio FirewallNGFW.
+    content = (
+      <AppShell route={route}>
+        <HomeScreen />
+      </AppShell>
+    );
+  } else if (route === 'firewall') {
+    // EGC-19: el módulo Firewall "El Portero" (antes montado bajo 'home', EGC-11) ahora
+    // tiene ruta propia, alcanzable desde el CTA de HomeScreen.
     content = (
       <AppShell route={route}>
         <FirewallModule />

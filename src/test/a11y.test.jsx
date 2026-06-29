@@ -17,6 +17,7 @@ import { PolicyModuleComplete } from '../components/modules/policy/PolicyModuleC
 import { POLICY_LEVELS, makeSeedRules } from '../hooks/usePolicyModule';
 import { detectShadowing } from '../lib/firewall-engine';
 import { AvatarIntervention } from '../components/avatar/AvatarIntervention';
+import { HomeScreen } from '../components/shell/HomeScreen';
 
 // Gate WCAG AA ejecutable (WBS 2.3 / 6.2). Corre axe-core sobre el árbol
 // renderizado en jsdom. color-contrast no se evalúa en jsdom (no hay layout
@@ -136,6 +137,17 @@ describe('Accesibilidad (axe-core, WCAG 2 A/AA)', () => {
     const violations = await noViolations(
       <AvatarIntervention message="Mensaje de prueba de NORA." isVisible onDismiss={() => {}} />
     );
+    expect(violations).toEqual([]);
+  });
+
+  // EGC-19 — overview del track Fundamentos (3 tarjetas de módulo + CTAs). Se siembra un módulo
+  // completo para ejercitar también el badge "Completado".
+  it('HomeScreen (overview del track) no tiene violaciones', async () => {
+    localStorage.setItem(
+      'egc_firewall_progress',
+      JSON.stringify({ completed: [1, 2, 3, 4, 5, 6, 7, 8, 9] })
+    );
+    const violations = await noViolations(<HomeScreen />);
     expect(violations).toEqual([]);
   });
 });

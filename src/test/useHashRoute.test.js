@@ -47,6 +47,10 @@ describe('parseRoute', () => {
     expect(parseRoute('#/policy')).toBe('policy');
   });
 
+  it('reconoce #/firewall como ruta firewall (módulo El Portero, EGC-19)', () => {
+    expect(parseRoute('#/firewall')).toBe('firewall');
+  });
+
   it('devuelve game para rutas desconocidas', () => {
     expect(parseRoute('#/whatever')).toBe('game');
   });
@@ -92,6 +96,10 @@ describe('isProtectedRoute', () => {
 
   it('policy es una ruta protegida (EGC-18)', () => {
     expect(isProtectedRoute('policy')).toBe(true);
+  });
+
+  it('firewall es una ruta protegida (EGC-19)', () => {
+    expect(isProtectedRoute('firewall')).toBe(true);
   });
 
   it('game no es una ruta protegida', () => {

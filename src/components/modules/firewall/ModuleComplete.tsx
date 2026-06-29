@@ -47,6 +47,14 @@ export function ModuleComplete({ onRestart, total = 9 }: ModuleCompleteProps) {
             Entrar a La Centralita
           </Button>
         </div>
+        <Button
+          variant="secondary"
+          size="lg"
+          className="w-full"
+          onClick={() => navigateTo('home')}
+        >
+          Volver al inicio
+        </Button>
         <Button variant="secondary" size="lg" className="w-full" onClick={onRestart}>
           Reiniciar módulo
         </Button>

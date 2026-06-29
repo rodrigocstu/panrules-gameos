@@ -44,8 +44,11 @@ export function AppShell({ children, route = 'home' }: AppShellProps) {
   // Streak-Freeze visible en UI (AC#3): racha rota, sin check-in hoy, con tokens y no descartado.
   const offerFreeze = !todayCheckedIn && isStreakBroken && freezeTokens > 0 && !freezeDismissed;
 
+  // EGC-19: cada pestaña del BottomNav tiene destino propio (antes 'streak' caía al default
+  // 'home', un callejón sin salida). 'perfil' y 'streak' van a ProfileScreen (que ya contiene
+  // StreakDashboard, EGC-12); 'modulos' y 'home' van al overview del track.
   const handleTab = (tab: BottomNavTab): void => {
-    if (tab === 'perfil') navigateTo('profile');
+    if (tab === 'perfil' || tab === 'streak') navigateTo('profile');
     else navigateTo('home');
   };
 
