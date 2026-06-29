@@ -7,6 +7,10 @@ import CommitButton from '../components/CommitButton.jsx';
 import ConsoleSettings from '../components/console/ConsoleSettings.jsx';
 import WarRoom from '../components/WarRoom.jsx';
 import HeatMap from '../components/console/HeatMap.jsx';
+import { StreakFreezeModal } from '../components/streak/StreakFreezeModal';
+import { CalendarStrip } from '../components/streak/StreakDashboard';
+import { NatEditorMobile } from '../components/modules/nat/NatEditorMobile';
+import { NAT_LEVELS } from '../hooks/useNatModule';
 
 // Gate WCAG AA ejecutable (WBS 2.3 / 6.2). Corre axe-core sobre el árbol
 // renderizado en jsdom. color-contrast no se evalúa en jsdom (no hay layout
@@ -56,6 +60,40 @@ describe('Accesibilidad (axe-core, WCAG 2 A/AA)', () => {
       difficulty: 'untried',
     }));
     const violations = await noViolations(<HeatMap perLevel={perLevel} />);
+    expect(violations).toEqual([]);
+  });
+
+  // EGC-12 — nuevos modales/diagramas (plan §10).
+  it('StreakFreezeModal no tiene violaciones', async () => {
+    const violations = await noViolations(
+      <StreakFreezeModal freezeTokens={2} onUseFreeze={() => {}} onDismiss={() => {}} />
+    );
+    expect(violations).toEqual([]);
+  });
+
+  it('CalendarStrip (calendario de racha) no tiene violaciones', async () => {
+    const days = [
+      { date: '2026-06-29', active: true, levelsCompleted: 1 },
+      { date: '2026-06-28', active: true, levelsCompleted: 0, isFreeze: true },
+      { date: '2026-06-27', active: false, levelsCompleted: 0 },
+    ];
+    const violations = await noViolations(<CalendarStrip days={days} />);
+    expect(violations).toEqual([]);
+  });
+
+  it('NatEditorMobile (diagrama NAT + campos) no tiene violaciones', async () => {
+    const config = {
+      srcZone: 'trust',
+      dstZone: 'trust',
+      app: 'any',
+      service: 'any',
+      action: 'ALLOW',
+      nat: 'NONE',
+      profile: 'none',
+    };
+    const violations = await noViolations(
+      <NatEditorMobile level={NAT_LEVELS[0]} config={config} onChange={() => {}} onSubmit={() => {}} />
+    );
     expect(violations).toEqual([]);
   });
 });

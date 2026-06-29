@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { parseRoute, navigateTo, useHashRoute } from '../hooks/useHashRoute.js';
+import {
+  parseRoute,
+  navigateTo,
+  useHashRoute,
+  isProtectedRoute,
+} from '../hooks/useHashRoute.js';
 
 beforeEach(() => {
   window.location.hash = '';
@@ -34,6 +39,10 @@ describe('parseRoute', () => {
     expect(parseRoute('#/warroom')).toBe('warroom');
   });
 
+  it('reconoce #/nat como ruta nat (módulo La Centralita, EGC-12)', () => {
+    expect(parseRoute('#/nat')).toBe('nat');
+  });
+
   it('devuelve game para rutas desconocidas', () => {
     expect(parseRoute('#/whatever')).toBe('game');
   });
@@ -59,6 +68,21 @@ describe('navigateTo', () => {
   it('pone el hash en #/warroom al navegar a warroom', () => {
     navigateTo('warroom');
     expect(window.location.hash).toBe('#/warroom');
+  });
+
+  it('pone el hash en #/nat al navegar a nat', () => {
+    navigateTo('nat');
+    expect(window.location.hash).toBe('#/nat');
+  });
+});
+
+describe('isProtectedRoute', () => {
+  it('nat es una ruta protegida (EGC-12)', () => {
+    expect(isProtectedRoute('nat')).toBe(true);
+  });
+
+  it('game no es una ruta protegida', () => {
+    expect(isProtectedRoute('game')).toBe(false);
   });
 });
 

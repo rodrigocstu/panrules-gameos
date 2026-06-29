@@ -75,7 +75,8 @@ async function register(request: Request, env: Env, db: D1Helper): Promise<Respo
     learningPath: 'beginner',
     calibrationDone: 0,
   });
-  // Inicializa la racha en 1 server-side (AC#3 / invariante 5).
+  // Inicializa la racha en 1 server-side (AC#3 / invariante 5). freezeTokens arranca en 0
+  // (EGC-12); se ganan en hitos de 7 días.
   await db.createStreak({
     userId,
     currentStreak: 1,
@@ -83,6 +84,7 @@ async function register(request: Request, env: Env, db: D1Helper): Promise<Respo
     lastCheckinAt: nowIso,
     totalDaysActive: 1,
     startedAt: nowIso,
+    freezeTokens: 0,
   });
 
   const { accessToken, refreshToken } = await issueSession(db, env, userId);

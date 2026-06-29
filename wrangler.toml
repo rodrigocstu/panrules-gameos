@@ -16,3 +16,9 @@ pages_build_output_dir = "dist"
 binding = "DB"
 database_name = "edugame-db"
 database_id = "REPLACE_WITH_D1_ID"   # DOps: rellenar con el id de `wrangler d1 create`
+
+[vars]
+# EGC-12: allowlist de userId admin (separados por coma) para GET /api/metrics/cohort-retention.
+# Vacío = nadie es admin (deniega por defecto, seguro). DOps: rellenar con los UUID de los admins.
+# No es secreto (son UUID de usuario), por eso va en [vars] y no como `wrangler pages secret`.
+ADMIN_USER_IDS = ""

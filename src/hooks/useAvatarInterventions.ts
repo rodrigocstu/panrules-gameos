@@ -11,6 +11,7 @@ import {
   AVATAR_INTERVENTIONS,
   HINT_TOKEN,
   type AvatarInterventionKey,
+  type AvatarInterventionCopy,
 } from '../lib/avatar-copy';
 
 /** Retardo de auto-ocultado de la burbuja (ms). */
@@ -39,7 +40,10 @@ export interface UseAvatarInterventions {
 }
 
 export function useAvatarInterventions(
-  autoHideMs: number = AVATAR_AUTO_HIDE_MS
+  autoHideMs: number = AVATAR_AUTO_HIDE_MS,
+  // Conjunto de copy a usar. Default = El Portero (Firewall); La Centralita pasa
+  // NAT_INTERVENTIONS. Backward-compatible: los llamadores existentes no cambian (EGC-12).
+  copy: AvatarInterventionCopy = AVATAR_INTERVENTIONS
 ): UseAvatarInterventions {
   const [currentMessage, setCurrentMessage] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -80,21 +84,21 @@ export function useAvatarInterventions(
     (attemptCount: number, verdict?: VerdictLike | null, level?: Level | null): string | null => {
       // Intento 1 — direccional genérico (§4.2).
       if (attemptCount <= 1) {
-        return AVATAR_INTERVENTIONS.first_wrong[0];
+        return copy.first_wrong[0];
       }
       // Intento 2 — concepto por reasonCode (§4.2). Fallback documentado a la genérica
       // para los reasonCodes sin línea verbatim (gap UXW: ACTION/SERVICE/PROFILE_*).
       if (attemptCount === 2) {
         const code: ReasonCode | undefined = verdict?.reasonCode;
-        const concept = code ? AVATAR_INTERVENTIONS.second_wrong[code] : undefined;
-        return concept ?? AVATAR_INTERVENTIONS.first_wrong[0];
+        const concept = code ? copy.second_wrong[code] : undefined;
+        return concept ?? copy.first_wrong[0];
       }
       // Intento ≥3 — indicación directa con el valor exacto de levels.ts (§4.8).
-      const frame = AVATAR_INTERVENTIONS.third_wrong_frame[0] ?? '';
+      const frame = copy.third_wrong_frame[0] ?? '';
       const hint = pickText(level?.hint, 'es');
       return frame.replace(HINT_TOKEN, hint);
     },
-    []
+    [copy]
   );
 
   const onWrongAttempt = useCallback(
@@ -108,12 +112,12 @@ export function useAvatarInterventions(
     (attemptCount: number) => {
       // §4.7 sólo cubre acierto en 2.º intento (idx 0) y 3.er+ (idx 1). El acierto a la
       // primera no tiene línea verbatim → sin burbuja (lo celebra LevelComplete).
-      const variants = AVATAR_INTERVENTIONS.correct;
+      const variants = copy.correct;
       if (attemptCount <= 1 || variants.length === 0) return;
       const idx = Math.min(attemptCount - 2, variants.length - 1);
       show(variants[idx]);
     },
-    [show]
+    [copy, show]
   );
 
   const triggerIntervention = useCallback(
@@ -128,10 +132,10 @@ export function useAvatarInterventions(
           onCorrect(ctx?.attemptCount ?? 1);
           return;
         case 'module_complete':
-          show(AVATAR_INTERVENTIONS.module_complete[0] ?? null);
+          show(copy.module_complete[0] ?? null);
           return;
         case 'level_complete': {
-          const variants = AVATAR_INTERVENTIONS.level_complete;
+          const variants = copy.level_complete;
           if (variants.length === 0) return;
           // Determinista por id de nivel (bible §5.6).
           const idx = ((((ctx?.levelId ?? 1) - 1) % variants.length) + variants.length) % variants.length;
@@ -140,7 +144,7 @@ export function useAvatarInterventions(
         }
       }
     },
-    [onCorrect, onWrongAttempt, show]
+    [copy, onCorrect, onWrongAttempt, show]
   );
 
   return { currentMessage, isVisible, triggerIntervention, onWrongAttempt, onCorrect, dismiss };

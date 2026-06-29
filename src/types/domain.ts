@@ -320,7 +320,7 @@ export interface Avatar {
   lastInteractionAt: string;
 }
 
-// ─── Streak (EGC-6) ──────────────────────────────────────────────────────────
+// ─── Streak (EGC-6, +Streak-Freeze EGC-12) ───────────────────────────────────
 export interface Streak {
   userId: string;
   /** Días consecutivos con al menos 1 nivel completado. */
@@ -331,6 +331,12 @@ export interface Streak {
   totalDaysActive: number;
   /** ISO 8601 — día 1 del registro (streak arranca aquí). */
   startedAt: string;
+  /**
+   * Tokens de congelación disponibles (EGC-12). Cada uno protege una racha rota sin
+   * reiniciar `currentStreak`. Se ganan en hitos (cada 7 días) con tope `MAX_FREEZE_TOKENS`.
+   * La fuente de verdad es el servidor (ZT §4.5); el valor local es caché.
+   */
+  freezeTokens: number;
 }
 
 export interface StreakDay {
@@ -338,6 +344,8 @@ export interface StreakDay {
   date: string;
   active: boolean;
   levelsCompleted: number;
+  /** EGC-12: el día se cubrió gastando un token de congelación (no actividad real). */
+  isFreeze?: boolean;
 }
 
 // ─── Calibration (EGC-6) ─────────────────────────────────────────────────────

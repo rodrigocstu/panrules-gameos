@@ -5,6 +5,7 @@
 import type { UserProfile } from '../../types/domain';
 import { Button, Card, Badge } from '../ui';
 import { useStreak } from '../../hooks/useStreak';
+import { StreakDashboard } from '../streak/StreakDashboard';
 
 const PATH_LABEL: Record<UserProfile['learningPath'], string> = {
   beginner: 'Principiante',
@@ -23,6 +24,8 @@ export function ProfileScreen({ user, onLogout }: ProfileScreenProps) {
   return (
     <div className="px-4 py-6 flex flex-col gap-4">
       <h1 className="text-mobile-xl font-bold text-neutral-900">Tu perfil</h1>
+
+      <StreakDashboard />
 
       <Card aria-label="Datos de la cuenta" className="flex flex-col gap-3">
         <div className="flex justify-between items-center">

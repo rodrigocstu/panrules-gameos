@@ -10,6 +10,7 @@ import OnboardingFlow from './components/onboarding/OnboardingFlow';
 import AppShell from './components/shell/AppShell';
 import ProfileScreen from './components/shell/ProfileScreen';
 import FirewallModule from './components/modules/firewall/FirewallModule';
+import NatModule from './components/modules/nat/NatModule';
 import { AvatarBubble } from './components/ui';
 
 // Splash neutro mientras la sesión hidrata. NUNCA muestra contenido protegido (AC#4):
@@ -72,6 +73,13 @@ export default function Root() {
     content = (
       <AppShell route={route}>
         <FirewallModule />
+      </AppShell>
+    );
+  } else if (route === 'nat') {
+    // EGC-12: el módulo NAT "La Centralita" (SNAT/DNAT/U-Turn).
+    content = (
+      <AppShell route={route}>
+        <NatModule />
       </AppShell>
     );
   } else {

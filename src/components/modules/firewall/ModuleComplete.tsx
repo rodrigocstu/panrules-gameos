@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { Badge, Button, Card } from '../../ui';
 import { useAvatarInterventions } from '../../../hooks/useAvatarInterventions';
 import { AvatarIntervention } from '../../avatar/AvatarIntervention';
+import { navigateTo } from '../../../hooks/useHashRoute.js';
 
 export interface ModuleCompleteProps {
   onRestart: () => void;
@@ -32,13 +33,21 @@ export function ModuleComplete({ onRestart, total = 9 }: ModuleCompleteProps) {
         </p>
         <div className="w-full rounded-lg bg-primary/5 p-3">
           <p className="text-mobile-sm font-semibold text-primary-dark">
-            Próximamente: La Centralita (Sprint 3)
+            Siguiente módulo: La Centralita
           </p>
           <p className="text-mobile-xs text-neutral-600">
             SNAT, DNAT y el U-Turn que más confunde a todos.
           </p>
+          <Button
+            variant="primary"
+            size="md"
+            className="mt-2 w-full"
+            onClick={() => navigateTo('nat')}
+          >
+            Entrar a La Centralita
+          </Button>
         </div>
-        <Button variant="primary" size="lg" className="w-full" onClick={onRestart}>
+        <Button variant="secondary" size="lg" className="w-full" onClick={onRestart}>
           Reiniciar módulo
         </Button>
       </Card>

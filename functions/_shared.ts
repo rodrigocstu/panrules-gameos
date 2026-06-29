@@ -30,6 +30,11 @@ export interface Env {
   DB: D1Database;
   /** Secret de Cloudflare — JAMÁS hardcodeado ni en [vars]. */
   WORKER_JWT_SECRET: string;
+  /**
+   * EGC-12: allowlist de userId admin (separados por coma) para /api/metrics/cohort-retention.
+   * Vacío/ausente ⇒ nadie es admin (deniega por defecto). Var en wrangler.toml (no es secreto).
+   */
+  ADMIN_USER_IDS?: string;
 }
 
 export interface PagesContext {

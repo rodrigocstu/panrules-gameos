@@ -23,6 +23,8 @@ export interface StreakRow {
   lastCheckinAt: string;
   totalDaysActive: number;
   startedAt: string;
+  /** EGC-12: tokens de congelación (migración 002). */
+  freezeTokens: number;
 }
 
 export interface StreakDayRow {
@@ -30,6 +32,8 @@ export interface StreakDayRow {
   date: string;
   active: number;
   levelsCompleted: number;
+  /** EGC-12: 1 si el día se cubrió con un Freeze (migración 002). */
+  isFreeze: number;
 }
 
 export interface CalibrationResultRow {
@@ -119,8 +123,8 @@ export class D1Helper {
   async createStreak(row: StreakRow): Promise<void> {
     await this.db
       .prepare(
-        `INSERT INTO streaks (userId, currentStreak, longestStreak, lastCheckinAt, totalDaysActive, startedAt)
-         VALUES (?, ?, ?, ?, ?, ?)`
+        `INSERT INTO streaks (userId, currentStreak, longestStreak, lastCheckinAt, totalDaysActive, startedAt, freezeTokens)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         row.userId,
@@ -128,7 +132,8 @@ export class D1Helper {
         row.longestStreak,
         row.lastCheckinAt,
         row.totalDaysActive,
-        row.startedAt
+        row.startedAt,
+        row.freezeTokens
       )
       .run();
   }
@@ -136,20 +141,27 @@ export class D1Helper {
   async updateStreak(row: StreakRow): Promise<void> {
     await this.db
       .prepare(
-        `UPDATE streaks SET currentStreak = ?, longestStreak = ?, lastCheckinAt = ?, totalDaysActive = ?
+        `UPDATE streaks SET currentStreak = ?, longestStreak = ?, lastCheckinAt = ?, totalDaysActive = ?, freezeTokens = ?
          WHERE userId = ?`
       )
-      .bind(row.currentStreak, row.longestStreak, row.lastCheckinAt, row.totalDaysActive, row.userId)
+      .bind(
+        row.currentStreak,
+        row.longestStreak,
+        row.lastCheckinAt,
+        row.totalDaysActive,
+        row.freezeTokens,
+        row.userId
+      )
       .run();
   }
 
   async upsertStreakDay(row: StreakDayRow): Promise<void> {
     await this.db
       .prepare(
-        `INSERT INTO streak_days (userId, date, active, levelsCompleted) VALUES (?, ?, ?, ?)
-         ON CONFLICT(userId, date) DO UPDATE SET active = excluded.active, levelsCompleted = excluded.levelsCompleted`
+        `INSERT INTO streak_days (userId, date, active, levelsCompleted, isFreeze) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(userId, date) DO UPDATE SET active = excluded.active, levelsCompleted = excluded.levelsCompleted, isFreeze = excluded.isFreeze`
       )
-      .bind(row.userId, row.date, row.active, row.levelsCompleted)
+      .bind(row.userId, row.date, row.active, row.levelsCompleted, row.isFreeze)
       .run();
   }
 
@@ -158,6 +170,24 @@ export class D1Helper {
       .prepare('SELECT * FROM streak_days WHERE userId = ? ORDER BY date DESC LIMIT ?')
       .bind(userId, days)
       .all<StreakDayRow>();
+    return res.results ?? [];
+  }
+
+  /**
+   * EGC-12: completaciones de nivel anotadas con su día-desde-registro (cohorte D3). JOIN
+   * metric_events × users; dayOffset = días civiles enteros desde users.createdAt al evento.
+   * Sin input de usuario interpolado (eventType es literal) → parametrizado/anti-SQLi.
+   */
+  async getCohortCompletions(): Promise<{ userId: string; dayOffset: number }[]> {
+    const res = await this.db
+      .prepare(
+        `SELECT m.userId AS userId,
+                CAST(julianday(date(m.timestamp)) - julianday(date(u.createdAt)) AS INTEGER) AS dayOffset
+         FROM metric_events m
+         JOIN users u ON u.userId = m.userId
+         WHERE m.eventType = 'level_completed'`
+      )
+      .all<{ userId: string; dayOffset: number }>();
     return res.results ?? [];
   }
 

@@ -12,6 +12,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Streak } from '../types/domain';
 import { api, isOffline } from '../services/api';
+import {
+  freezeStreak,
+  earnFreeze as earnFreezeReducer,
+  isStreakBroken as computeStreakBroken,
+} from '../lib/streak-freeze';
 
 const STREAK_KEY = 'egc_streak';
 
@@ -48,8 +53,14 @@ function loadStreak(): Streak | null {
   try {
     const raw = localStorage.getItem(STREAK_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return isStreak(parsed) ? parsed : null;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isStreak(parsed)) return null;
+    // Migración-en-lectura (EGC-12): los objetos `egc_streak` persistidos por EGC-10 no
+    // tienen `freezeTokens`. Normalizar a 0 para no romper la hidratación offline (§12).
+    return {
+      ...parsed,
+      freezeTokens: typeof parsed.freezeTokens === 'number' ? parsed.freezeTokens : 0,
+    };
   } catch {
     return null;
   }
@@ -73,6 +84,7 @@ export function makeInitialStreak(userId: string, now: Date = new Date()): Strea
     lastCheckinAt: iso,
     totalDaysActive: 1,
     startedAt: iso,
+    freezeTokens: 0,
   };
 }
 
@@ -107,10 +119,18 @@ export interface UseStreak {
   streak: Streak | null;
   todayCheckedIn: boolean;
   loading: boolean;
+  /** Tokens de congelación disponibles (EGC-12). 0 cuando no hay racha. */
+  freezeTokens: number;
+  /** Derivado: se perdió ≥1 día y aún no hay check-in hoy (la racha está rota). */
+  isStreakBroken: boolean;
   /** Inicializa la racha en 1 (se llama tras el registro). */
   initStreak: (userId: string) => Streak;
   /** Registra actividad del día; idempotente dentro del mismo día local. */
   checkIn: () => void;
+  /** Gasta un token para proteger una racha rota sin reiniciar currentStreak (EGC-12). */
+  useFreeze: () => void;
+  /** Otorga un token localmente (espejo offline; el grant autoritativo es server-side). */
+  earnFreeze: () => void;
   /** Re-hidrata desde localStorage (sin red). */
   refresh: () => void;
 }
@@ -160,6 +180,35 @@ export function useStreak(): UseStreak {
     })();
   }, [commit]);
 
+  // Gasta un token para proteger la racha rota: aplica el reductor puro `freezeStreak`
+  // dentro del mismo `commit()` anti-carrera que checkIn, y sincroniza best-effort con el
+  // servidor (autoritativo). Offline, el estado local protege la racha hasta reconciliar.
+  const applyFreeze = useCallback(() => {
+    commit((base) => (base ? freezeStreak(base) : base));
+    void (async () => {
+      try {
+        const res = await api.freeze('use');
+        if (!isOffline(res)) setStreak(res);
+      } catch {
+        // Offline: el estado local basta; el servidor reconciliará en una sesión futura.
+      }
+    })();
+  }, [commit]);
+
+  // Espejo offline del grant de token. El grant autoritativo ocurre server-side en el
+  // check-in de hito (cada 7 días); aquí solo refleja la intención cuando hay backend.
+  const applyEarnFreeze = useCallback(() => {
+    commit((base) => (base ? earnFreezeReducer(base) : base));
+    void (async () => {
+      try {
+        const res = await api.freeze('earn');
+        if (!isOffline(res)) setStreak(res);
+      } catch {
+        // Offline: el tope se respeta localmente; el servidor es la fuente de verdad.
+      }
+    })();
+  }, [commit]);
+
   const refresh = useCallback(() => {
     const fresh = loadStreak();
     lastPersistedRef.current = fresh;
@@ -180,8 +229,12 @@ export function useStreak(): UseStreak {
     streak,
     todayCheckedIn: isCheckedInToday(streak),
     loading,
+    freezeTokens: streak?.freezeTokens ?? 0,
+    isStreakBroken: computeStreakBroken(streak),
     initStreak,
     checkIn,
+    useFreeze: applyFreeze,
+    earnFreeze: applyEarnFreeze,
     refresh,
   };
 }

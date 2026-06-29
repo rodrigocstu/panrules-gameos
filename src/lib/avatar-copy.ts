@@ -65,3 +65,19 @@ export const AVATAR_INTERVENTIONS: AvatarInterventionCopy = {
     'Completaste El Portero. Ya no es teoría: configuraste zonas reales, manejaste el deny implícito y entendiste por qué PAN-OS necesita conocer origen y destino antes de dejar pasar un paquete. Ese es un fundamento que no se improvisa.',
   ],
 };
+
+// Copy del módulo NAT "La Centralita" (EGC-12). Las líneas in-level (first/second/third_wrong,
+// correct) son DETERMINISTAS por `verdict.reasonCode` del motor e idénticas entre módulos
+// (NAT_MISMATCH ya está en AVATAR_INTERVENTIONS.second_wrong), así que se heredan tal cual; SOLO
+// `module_complete` es específico de La Centralita. Se parametriza `useAvatarInterventions(copy)`
+// en vez de mutar el const compartido, para no acoplar la integración de avatar de EGC-13.
+//
+// La línea `module_complete` es VERBATIM de docs/avatar-personality-bible.md §4.5 "[LOGRO DE
+// MODULO — completar modulo NAT]" (rama feat/egc-2-avatar-bible). No se redacta copy nuevo
+// (Iron Law / gate UXW). Pendiente: sign-off escrito de UXW antes del merge, igual que EGC-11.
+export const NAT_INTERVENTIONS: AvatarInterventionCopy = {
+  ...AVATAR_INTERVENTIONS,
+  module_complete: [
+    'Terminaste el módulo de NAT. SNAT, DNAT, y el que más confunde a todos — el U-Turn. Ya sabes cuándo PAN-OS aplica la traducción y cómo afecta las zonas en la security policy. Eso es exactamente lo que distingue a un operador que configura de uno que entiende.',
+  ],
+};

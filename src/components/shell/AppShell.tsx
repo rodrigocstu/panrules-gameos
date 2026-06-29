@@ -5,10 +5,11 @@
 // montaje sin tocar la red, al recargar offline el StreakCounter sigue mostrando el valor
 // correcto (AC#3). AppShell asume usuario autenticado; el gate vive en Root (AC#4), así
 // que nunca se monta para un usuario sin sesión.
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { BottomNav, StreakCounter, type BottomNavTab } from '../ui';
 import { useStreak } from '../../hooks/useStreak';
 import { navigateTo } from '../../hooks/useHashRoute.js';
+import { StreakFreezeModal } from '../streak/StreakFreezeModal';
 
 export interface AppShellProps {
   children: ReactNode;
@@ -21,12 +22,24 @@ function tabForRoute(route: string): BottomNavTab {
 }
 
 export function AppShell({ children, route = 'home' }: AppShellProps) {
-  const { streak } = useStreak();
+  // `useFreeze` se renombra a `applyFreeze` al desestructurar: un identificador con prefijo
+  // `use` llamado dentro de un handler dispararía react-hooks/rules-of-hooks.
+  const { streak, todayCheckedIn, isStreakBroken, freezeTokens, useFreeze: applyFreeze } =
+    useStreak();
   const currentStreak = streak?.currentStreak ?? 0;
+  const [freezeDismissed, setFreezeDismissed] = useState(false);
+
+  // Streak-Freeze visible en UI (AC#3): racha rota, sin check-in hoy, con tokens y no descartado.
+  const offerFreeze = !todayCheckedIn && isStreakBroken && freezeTokens > 0 && !freezeDismissed;
 
   const handleTab = (tab: BottomNavTab): void => {
     if (tab === 'perfil') navigateTo('profile');
     else navigateTo('home');
+  };
+
+  const handleUseFreeze = (): void => {
+    applyFreeze();
+    setFreezeDismissed(true);
   };
 
   return (
@@ -39,6 +52,14 @@ export function AppShell({ children, route = 'home' }: AppShellProps) {
       <main className="max-w-sm mx-auto">{children}</main>
 
       <BottomNav activeTab={tabForRoute(route)} onTabChange={handleTab} />
+
+      {offerFreeze && (
+        <StreakFreezeModal
+          freezeTokens={freezeTokens}
+          onUseFreeze={handleUseFreeze}
+          onDismiss={() => setFreezeDismissed(true)}
+        />
+      )}
     </div>
   );
 }

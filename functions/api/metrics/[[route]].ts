@@ -68,6 +68,44 @@ async function retention(request: Request, db: D1Helper, userId: string): Promis
   );
 }
 
+/**
+ * GET /cohort-retention?window=3 — retención D3 de COHORTE (EGC-12, instrumento de AC#1).
+ * Distinta de /retention (que mide actividad por-usuario): cruza metric_events con
+ * users.createdAt para medir, de los usuarios activos en su día de registro, qué fracción
+ * vuelve `window` días después. Admin-gated por allowlist de env (vacío ⇒ nadie es admin).
+ * Espeja src/lib/retention.ts (probado con fixtures); el JOIN pesado vive en _db.
+ */
+async function cohortRetention(
+  request: Request,
+  db: D1Helper,
+  userId: string,
+  env: Env
+): Promise<Response> {
+  const admins = (env.ADMIN_USER_IDS ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!admins.includes(userId)) {
+    return error(request, 403, 'Solo administradores', 'FORBIDDEN');
+  }
+
+  const requested = Number.parseInt(new URL(request.url).searchParams.get('window') ?? '3', 10);
+  const window = Math.min(Math.max(Number.isFinite(requested) ? requested : 3, 1), 30);
+
+  const rows = await db.getCohortCompletions();
+  const cohort = new Set<string>();
+  const returned = new Set<string>();
+  for (const r of rows) {
+    if (r.dayOffset === 0) cohort.add(r.userId);
+    if (r.dayOffset === window) returned.add(r.userId);
+  }
+  let retained = 0;
+  for (const u of cohort) if (returned.has(u)) retained += 1;
+  const cohortSize = cohort.size;
+  const d3 = cohortSize === 0 ? 0 : retained / cohortSize;
+  return json({ window, cohortSize, retained, d3 }, request, 200);
+}
+
 export async function onRequest(context: PagesContext): Promise<Response> {
   const { request, env } = context;
   const userId = typeof context.data.userId === 'string' ? context.data.userId : '';
@@ -78,5 +116,8 @@ export async function onRequest(context: PagesContext): Promise<Response> {
 
   if (request.method === 'POST' && action === 'event') return event(request, db, userId);
   if (request.method === 'GET' && action === 'retention') return retention(request, db, userId);
+  if (request.method === 'GET' && action === 'cohort-retention') {
+    return cohortRetention(request, db, userId, env as Env);
+  }
   return error(request, 405, 'Método no permitido', 'METHOD_NOT_ALLOWED');
 }

@@ -8,10 +8,13 @@
 
 import { Button, Card } from '../../ui';
 import { pickText } from '../../../i18n/pickText';
-import { APPS, PROFILES, SERVICES, ZONES } from '../../../data/constants';
+import { APPS, PROFILES, SERVICES } from '../../../data/constants';
 import type { Level, PolicyConfig } from '../../../types/domain';
 import type { PolicyEditableField } from '../../../hooks/useFirewallModule';
-import { PolicyField, type PolicyFieldOption } from './PolicyField';
+import { PolicyField } from './PolicyField';
+// Opciones zona/action/nat extraídas a un módulo compartido (EGC-12) para que el editor
+// Firewall y el editor NAT no deriven entre sí.
+import { ZONE_OPTIONS, ACTION_OPTIONS, NAT_OPTIONS } from '../policyFieldOptions';
 
 export interface PolicyEditorMobileProps {
   level: Level;
@@ -20,25 +23,6 @@ export interface PolicyEditorMobileProps {
   onSubmit: () => void;
   disabled?: boolean;
 }
-
-const ZONE_OPTIONS: PolicyFieldOption[] = Object.values(ZONES).map((z) => ({
-  id: z.id,
-  label: z.label,
-}));
-
-// `action` y `nat` se derivan de los literales de dominio (Action / NatType): no existe
-// un array de constantes para ellos en constants.ts.
-const ACTION_OPTIONS: PolicyFieldOption[] = [
-  { id: 'ALLOW', label: 'allow' },
-  { id: 'DENY', label: 'deny' },
-];
-
-const NAT_OPTIONS: PolicyFieldOption[] = [
-  { id: 'NONE', label: 'No NAT' },
-  { id: 'SNAT', label: 'Source NAT (SNAT)' },
-  { id: 'DNAT', label: 'Destination NAT (DNAT)' },
-  { id: 'DNAT+SNAT', label: 'U-Turn (DNAT+SNAT)' },
-];
 
 export function PolicyEditorMobile({
   level,

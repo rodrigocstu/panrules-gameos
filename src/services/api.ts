@@ -8,6 +8,7 @@
 // refresh también falla, limpia la sesión y lanza `AuthError` (architecture.md §2/§4).
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '../lib/tokenStore';
 import type { CalibrationAnswer, CalibrationResult, Streak, StreakDay } from '../types/domain';
+import type { CohortRetentionResult } from '../lib/retention';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
@@ -124,6 +125,19 @@ export class ApiClient {
     });
   }
 
+  /**
+   * Streak-Freeze (EGC-12): `use` gasta un token para proteger una racha rota; `earn`
+   * registra la intención de ganar uno. El servidor valida autoritativamente (no usar si 0,
+   * no exceder el tope) y devuelve la racha actualizada (ZT §4.5).
+   */
+  async freeze(action: 'use' | 'earn'): Promise<Streak | OfflineResult> {
+    if (!this.online) return { offline: true };
+    return this.authedJson<Streak>('/api/streak/freeze', {
+      method: 'POST',
+      body: JSON.stringify({ action }),
+    });
+  }
+
   // ─── Calibración ─────────────────────────────────────────────────────────────
   async submitCalibration(
     answers: CalibrationAnswer[],
@@ -141,6 +155,19 @@ export class ApiClient {
     return this.authedJson<CalibrationResult | { done: false }>('/api/calibration/result', {
       method: 'GET',
     });
+  }
+
+  // ─── Métricas (admin) ──────────────────────────────────────────────────────
+  /**
+   * Retención D3 de cohorte (EGC-12, instrumento de AC#1). Endpoint admin-gated; offline →
+   * centinela. `window` por defecto 3 días tras el registro.
+   */
+  async getCohortRetention(window = 3): Promise<CohortRetentionResult | OfflineResult> {
+    if (!this.online) return { offline: true };
+    return this.authedJson<CohortRetentionResult>(
+      `/api/metrics/cohort-retention?window=${window}`,
+      { method: 'GET' }
+    );
   }
 
   // ─── Internos ────────────────────────────────────────────────────────────────

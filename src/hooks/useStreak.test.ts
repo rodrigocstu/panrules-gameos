@@ -71,3 +71,59 @@ describe('useStreak (AC#3)', () => {
     expect(result.current.todayCheckedIn).toBe(true);
   });
 });
+
+describe('useStreak — Streak-Freeze (EGC-12, AC#3)', () => {
+  // Objeto persistido por EGC-10 SIN el campo freezeTokens (migración-en-lectura, §12).
+  const legacyStreak = {
+    userId: 'user-1',
+    currentStreak: 3,
+    longestStreak: 3,
+    lastCheckinAt: new Date().toISOString(),
+    totalDaysActive: 3,
+    startedAt: new Date().toISOString(),
+  };
+
+  // Racha rota: último check-in muy antiguo (gap >> 2 días), con tokens disponibles.
+  const brokenWithTokens = {
+    userId: 'user-1',
+    currentStreak: 4,
+    longestStreak: 6,
+    lastCheckinAt: new Date('2020-01-01T08:00:00').toISOString(),
+    totalDaysActive: 9,
+    startedAt: new Date('2019-12-01T08:00:00').toISOString(),
+    freezeTokens: 2,
+  };
+
+  it('hidrata freezeTokens=0 para objetos egc_streak legacy (sin el campo)', async () => {
+    localStorage.setItem('egc_streak', JSON.stringify(legacyStreak));
+    const { result } = renderHook(() => useStreak());
+    await waitFor(() => expect(result.current.streak).not.toBeNull());
+    expect(result.current.freezeTokens).toBe(0);
+    expect(result.current.streak?.currentStreak).toBe(3);
+  });
+
+  it('useFreeze protege la racha rota: gasta un token y PRESERVA currentStreak', async () => {
+    localStorage.setItem('egc_streak', JSON.stringify(brokenWithTokens));
+    const { result } = renderHook(() => useStreak());
+    await waitFor(() => expect(result.current.streak).not.toBeNull());
+    expect(result.current.isStreakBroken).toBe(true);
+    expect(result.current.freezeTokens).toBe(2);
+
+    act(() => result.current.useFreeze());
+
+    expect(result.current.freezeTokens).toBe(1);
+    expect(result.current.streak?.currentStreak).toBe(4); // preservado
+    expect(result.current.isStreakBroken).toBe(false); // ya no procede otro freeze
+  });
+
+  it('earnFreeze incrementa el token localmente (espejo offline)', async () => {
+    localStorage.setItem('egc_streak', JSON.stringify({ ...brokenWithTokens, freezeTokens: 0 }));
+    const { result } = renderHook(() => useStreak());
+    await waitFor(() => expect(result.current.streak).not.toBeNull());
+    expect(result.current.freezeTokens).toBe(0);
+
+    act(() => result.current.earnFreeze());
+
+    expect(result.current.freezeTokens).toBe(1);
+  });
+});
