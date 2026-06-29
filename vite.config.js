@@ -19,9 +19,46 @@ import { VitePWA } from 'vite-plugin-pwa';
 // ─────────────────────────────────────────────────────────────────────────────
 const BASE = '/panrules-gameos/';
 
+// CSP de la WebView móvil / Pages (EGC-10, invariante ZT §4.4). Se inyecta SÓLO en el
+// build (`apply: 'build'`) para no romper el preámbulo inline de React Fast Refresh en
+// `npm run dev`; el index.html publicado (dist/ y dist-mobile/) sí lleva la cabecera.
+// `script-src 'self'` es el núcleo anti-XSS (sin scripts inline); `style-src 'unsafe-inline'`
+// habilita los estilos inline de los componentes; `connect-src` permite el backend HTTPS,
+// el esquema capacitor:// nativo y http://localhost en desarrollo nativo (CORS architecture §4).
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "img-src 'self' data:",
+  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self'",
+  "connect-src 'self' https: capacitor: http://localhost",
+  "font-src 'self' data:",
+  "manifest-src 'self'",
+  "worker-src 'self'",
+  "frame-ancestors 'none'",
+].join('; ');
+
+function cspMeta() {
+  return {
+    name: 'egc-csp-meta',
+    apply: 'build',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'meta',
+          attrs: { 'http-equiv': 'Content-Security-Policy', content: CSP },
+          injectTo: 'head-prepend',
+        },
+      ];
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    cspMeta(),
     react(),
     // Minimal installable PWA shell (PNR-3). vite-plugin-pwa derives the SW
     // scope, manifest paths and precache from the Vite `base`, so the app stays

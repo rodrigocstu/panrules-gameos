@@ -14,7 +14,29 @@ export function parseRoute(hash) {
   const clean = (hash || '').replace(/^#\/?/, '').split('?')[0];
   if (clean === 'console') return 'console';
   if (clean === 'warroom') return 'warroom';
+  if (clean === 'auth') return 'auth';
+  if (clean === 'calibration') return 'calibration';
+  if (clean === 'home') return 'home';
+  if (clean === 'profile') return 'profile';
   return 'game';
+}
+
+// Rutas que exigen sesión iniciada. El acceso sin auth se redirige a 'auth' (AC#4 EGC-10).
+const PROTECTED_ROUTES = new Set(['home', 'profile', 'calibration']);
+
+/** ¿La ruta requiere usuario autenticado? */
+export function isProtectedRoute(route) {
+  return PROTECTED_ROUTES.has(route);
+}
+
+/** ¿Es la ruta de autenticación (login/registro)? */
+export function isAuthRoute(route) {
+  return route === 'auth';
+}
+
+/** ¿La ruta forma parte del onboarding (auth o calibración)? */
+export function isOnboarding(route) {
+  return route === 'auth' || route === 'calibration';
 }
 
 export function navigateTo(name) {

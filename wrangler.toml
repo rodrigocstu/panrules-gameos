@@ -1,0 +1,18 @@
+# Cloudflare Pages Functions + D1 (EGC-10). El backend de la API vive en functions/ y se
+# despliega como Pages Functions; el SPA estático se sirve por GitHub Pages (canal web) y por
+# la WebView Capacitor (canal nativo) — ver docs/architecture.md §1.
+#
+# Pasos DOps (humanos, no se pueden ejecutar en este entorno Windows/OneDrive sin wrangler):
+#   1. wrangler d1 create edugame-db        → copiar el database_id devuelto debajo.
+#   2. wrangler d1 migrations apply edugame-db --remote   (aplica migrations/001_initial_schema.sql)
+#   3. wrangler pages secret put WORKER_JWT_SECRET        → secreto HS256 (NUNCA en el repo ni en [vars]).
+# Rate limiting de /api/auth/* (10 req/IP/min) se configura como regla en el dashboard CF (architecture §4).
+
+name = "edugame-api"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "edugame-db"
+database_id = "REPLACE_WITH_D1_ID"   # DOps: rellenar con el id de `wrangler d1 create`
