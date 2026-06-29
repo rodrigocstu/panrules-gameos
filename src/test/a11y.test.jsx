@@ -16,6 +16,8 @@ import { ShadowBanner } from '../components/modules/policy/ShadowBanner';
 import { PolicyModuleComplete } from '../components/modules/policy/PolicyModuleComplete';
 import { POLICY_LEVELS, makeSeedRules } from '../hooks/usePolicyModule';
 import { detectShadowing } from '../lib/firewall-engine';
+import { AvatarIntervention } from '../components/avatar/AvatarIntervention';
+import { HomeScreen } from '../components/shell/HomeScreen';
 
 // Gate WCAG AA ejecutable (WBS 2.3 / 6.2). Corre axe-core sobre el árbol
 // renderizado en jsdom. color-contrast no se evalúa en jsdom (no hay layout
@@ -127,6 +129,25 @@ describe('Accesibilidad (axe-core, WCAG 2 A/AA)', () => {
 
   it('PolicyModuleComplete (pantalla final) no tiene violaciones', async () => {
     const violations = await noViolations(<PolicyModuleComplete onRestart={() => {}} />);
+    expect(violations).toEqual([]);
+  });
+
+  // EGC-17 — overlay global de situaciones de NORA montado en AppShell (AC#4).
+  it('AvatarIntervention (overlay global de NORA) no tiene violaciones', async () => {
+    const violations = await noViolations(
+      <AvatarIntervention message="Mensaje de prueba de NORA." isVisible onDismiss={() => {}} />
+    );
+    expect(violations).toEqual([]);
+  });
+
+  // EGC-19 — overview del track Fundamentos (3 tarjetas de módulo + CTAs). Se siembra un módulo
+  // completo para ejercitar también el badge "Completado".
+  it('HomeScreen (overview del track) no tiene violaciones', async () => {
+    localStorage.setItem(
+      'egc_firewall_progress',
+      JSON.stringify({ completed: [1, 2, 3, 4, 5, 6, 7, 8, 9] })
+    );
+    const violations = await noViolations(<HomeScreen />);
     expect(violations).toEqual([]);
   });
 });

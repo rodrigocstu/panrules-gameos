@@ -26,6 +26,14 @@ export type AvatarInterventionKey =
  */
 export const HINT_TOKEN = '{hint}';
 
+/**
+ * Sentinela para el `[N]` de la bible §4.4/§4.6 (espejo de `HINT_TOKEN`). En tiempo de
+ * disparo se reemplaza por el número real: en §4.4 (`broken_long`) por `currentStreak`
+ * (racha a punto de perderse), en §4.6 (`pause_long`) por `gap` (días de ausencia). NO es
+ * copy nuevo — sólo rellena el hueco que la bible deja escrito como `[N]`.
+ */
+export const STREAK_DAYS_TOKEN = '{n}';
+
 export interface AvatarInterventionCopy {
   /** §4.2 [PRIMER ERROR — primer intento fallido, generico]. */
   first_wrong: string[];
@@ -95,4 +103,51 @@ export const NAT_INTERVENTIONS: AvatarInterventionCopy = {
 export const POLICY_INTERVENTIONS: AvatarInterventionCopy = {
   ...AVATAR_INTERVENTIONS,
   module_complete: [],
+};
+
+// Situaciones GLOBALES del avatar NORA (EGC-17). A diferencia de AVATAR_INTERVENTIONS/
+// NAT_INTERVENTIONS (in-level, disparadas por el motor de un módulo), estas líneas se
+// disparan desde superficies globales (AppShell/useStreak) según señales de racha. Las
+// nueve líneas son VERBATIM de docs/avatar-personality-bible.md §4.1/§4.3/§4.4/§4.6 (rama
+// feat/egc-2-avatar-bible). No se redacta copy nuevo (Iron Law / gate UXW). `broken_long`
+// y `pause_long` llevan STREAK_DAYS_TOKEN donde la bible escribe `[N]`. Pendiente: sign-off
+// escrito de UXW del 100% del microcopy antes del merge, igual que EGC-11/12.
+export interface GlobalAvatarSituationCopy {
+  /** §4.1 [BIENVENIDA DIA 1 — primera apertura, sin historial]. */
+  welcome_day1: string;
+  /** §4.3 [STREAK MANTENIDO — 3 dias consecutivos]. */
+  streak_3: string;
+  /** §4.3 [STREAK MANTENIDO — 7 dias consecutivos]. */
+  streak_7: string;
+  /** §4.3 [STREAK MANTENIDO — 14 dias consecutivos]. */
+  streak_14: string;
+  /** §4.4 [STREAK ROTO — pausa de 1-2 dias]. */
+  broken_short: string;
+  /** §4.4 [STREAK ROTO — con Streak-Freeze consumido]. */
+  broken_freeze: string;
+  /** §4.4 [STREAK ROTO — pausa de 3-6 dias, racha mayor a 5]; `{n}` ← currentStreak. */
+  broken_long: string;
+  /** §4.6 [PAUSA LARGA — 4-7 dias sin actividad]. */
+  pause_medium: string;
+  /** §4.6 [PAUSA LARGA — mas de 7 dias sin actividad]; `{n}` ← gap de días. */
+  pause_long: string;
+}
+
+export const GLOBAL_INTERVENTIONS: GlobalAvatarSituationCopy = {
+  welcome_day1:
+    'Hola, soy NORA. Voy a acompañarte mientras configuras políticas de seguridad en PAN-OS. El primer escenario es intencionalmente sencillo — su objetivo es que veas cómo funciona el motor, no que pongas a prueba tu memoria. ¿Arrancamos?',
+  streak_3:
+    'Tres dias seguidos. Eso no es suerte — es hábito. La práctica diaria retiene los conceptos dos veces mejor que los bloques largos espaciados.',
+  streak_7:
+    'Una semana completa de práctica continua. En este momento tienes zonas, App-ID y servicios internalizados de una forma que no se puede fingir. Eso es tuyo.',
+  streak_14:
+    'Dos semanas. El 14 % de los operadores que empiezan este programa llega aquí. No por talento — por constancia. El firewall ya no te parece una caja negra, ¿verdad?',
+  broken_short:
+    'Bienvenido de vuelta. Una pausa no borra lo que construiste — el cerebro consolida lo aprendido cuando descansas. ¿Dónde lo dejamos?',
+  broken_freeze:
+    'Tu Freeze protegió la racha. Úsalo cuando lo necesites — esto no es una carrera. Lo importante es que volviste.',
+  broken_long: `Llevas unos días fuera y perdiste una racha de ${STREAK_DAYS_TOKEN} días. Eso duele un poco, lo sé. Pero los conceptos siguen ahí — empecemos con un nivel rápido de calentamiento antes de retomar donde estabas.`,
+  pause_medium:
+    'Llevas unos días fuera. Antes de avanzar, hagamos un repaso rápido de lo último que trabajamos — los conceptos se activan mejor cuando los revisamos al volver.',
+  pause_long: `Bienvenido de vuelta después de ${STREAK_DAYS_TOKEN} días. Es normal necesitar un momento para retomar el ritmo. Empecemos desde el último punto de control — sin prisa.`,
 };
