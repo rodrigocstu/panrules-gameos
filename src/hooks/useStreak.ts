@@ -28,7 +28,9 @@ export function localDateKey(d: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-function daysBetween(fromKey: string, toKey: string): number {
+/** Días calendario entre dos claves YYYY-MM-DD (hora local). Exportada para que el hook de
+ * situaciones globales (EGC-17) reutilice esta aritmética en vez de re-derivar el gap. */
+export function daysBetween(fromKey: string, toKey: string): number {
   const [fy, fm, fd] = fromKey.split('-').map(Number);
   const [ty, tm, td] = toKey.split('-').map(Number);
   const from = Date.UTC(fy, fm - 1, fd);

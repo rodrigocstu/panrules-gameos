@@ -8,8 +8,10 @@
 import { useState, type ReactNode } from 'react';
 import { BottomNav, StreakCounter, type BottomNavTab } from '../ui';
 import { useStreak } from '../../hooks/useStreak';
+import { useGlobalAvatarSituations } from '../../hooks/useGlobalAvatarSituations';
 import { navigateTo } from '../../hooks/useHashRoute.js';
 import { StreakFreezeModal } from '../streak/StreakFreezeModal';
+import { AvatarIntervention } from '../avatar/AvatarIntervention';
 
 export interface AppShellProps {
   children: ReactNode;
@@ -24,10 +26,20 @@ function tabForRoute(route: string): BottomNavTab {
 export function AppShell({ children, route = 'home' }: AppShellProps) {
   // `useFreeze` se renombra a `applyFreeze` al desestructurar: un identificador con prefijo
   // `use` llamado dentro de un handler dispararía react-hooks/rules-of-hooks.
-  const { streak, todayCheckedIn, isStreakBroken, freezeTokens, useFreeze: applyFreeze } =
+  const { streak, todayCheckedIn, isStreakBroken, freezeTokens, loading, useFreeze: applyFreeze } =
     useStreak();
   const currentStreak = streak?.currentStreak ?? 0;
   const [freezeDismissed, setFreezeDismissed] = useState(false);
+
+  // Situaciones globales de NORA (EGC-17): reusa las señales ya desestructuradas de useStreak
+  // (sin segunda suscripción) y monta AvatarIntervention como overlay global más abajo.
+  const avatar = useGlobalAvatarSituations({
+    streak,
+    todayCheckedIn,
+    isStreakBroken,
+    freezeTokens,
+    loading,
+  });
 
   // Streak-Freeze visible en UI (AC#3): racha rota, sin check-in hoy, con tokens y no descartado.
   const offerFreeze = !todayCheckedIn && isStreakBroken && freezeTokens > 0 && !freezeDismissed;
@@ -39,6 +51,7 @@ export function AppShell({ children, route = 'home' }: AppShellProps) {
 
   const handleUseFreeze = (): void => {
     applyFreeze();
+    avatar.onFreezeConsumed();
     setFreezeDismissed(true);
   };
 
@@ -60,6 +73,12 @@ export function AppShell({ children, route = 'home' }: AppShellProps) {
           onDismiss={() => setFreezeDismissed(true)}
         />
       )}
+
+      <AvatarIntervention
+        message={avatar.currentMessage}
+        isVisible={avatar.isVisible}
+        onDismiss={avatar.dismiss}
+      />
     </div>
   );
 }

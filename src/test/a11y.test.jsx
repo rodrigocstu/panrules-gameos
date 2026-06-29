@@ -11,6 +11,7 @@ import { StreakFreezeModal } from '../components/streak/StreakFreezeModal';
 import { CalendarStrip } from '../components/streak/StreakDashboard';
 import { NatEditorMobile } from '../components/modules/nat/NatEditorMobile';
 import { NAT_LEVELS } from '../hooks/useNatModule';
+import { AvatarIntervention } from '../components/avatar/AvatarIntervention';
 
 // Gate WCAG AA ejecutable (WBS 2.3 / 6.2). Corre axe-core sobre el árbol
 // renderizado en jsdom. color-contrast no se evalúa en jsdom (no hay layout
@@ -93,6 +94,14 @@ describe('Accesibilidad (axe-core, WCAG 2 A/AA)', () => {
     };
     const violations = await noViolations(
       <NatEditorMobile level={NAT_LEVELS[0]} config={config} onChange={() => {}} onSubmit={() => {}} />
+    );
+    expect(violations).toEqual([]);
+  });
+
+  // EGC-17 — overlay global de situaciones de NORA montado en AppShell (AC#4).
+  it('AvatarIntervention (overlay global de NORA) no tiene violaciones', async () => {
+    const violations = await noViolations(
+      <AvatarIntervention message="Mensaje de prueba de NORA." isVisible onDismiss={() => {}} />
     );
     expect(violations).toEqual([]);
   });

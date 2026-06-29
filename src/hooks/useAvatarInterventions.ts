@@ -29,6 +29,10 @@ export interface AvatarInterventionContext {
 export interface UseAvatarInterventions {
   currentMessage: string | null;
   isVisible: boolean;
+  /** Muestra un mensaje ya resuelto reutilizando la máquina de auto-ocultado + cleanup de
+   * timer (invariante #7). Lo usa el hook de situaciones globales (EGC-17) para no duplicar
+   * una segunda implementación de timer. No-op si el mensaje es null/''. */
+  showMessage: (message: string | null) => void;
   triggerIntervention: (key: AvatarInterventionKey, ctx?: AvatarInterventionContext) => void;
   onWrongAttempt: (
     attemptCount: number,
@@ -147,5 +151,5 @@ export function useAvatarInterventions(
     [copy, onCorrect, onWrongAttempt, show]
   );
 
-  return { currentMessage, isVisible, triggerIntervention, onWrongAttempt, onCorrect, dismiss };
+  return { currentMessage, isVisible, showMessage: show, triggerIntervention, onWrongAttempt, onCorrect, dismiss };
 }
