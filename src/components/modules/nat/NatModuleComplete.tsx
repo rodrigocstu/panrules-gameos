@@ -38,11 +38,19 @@ export function NatModuleComplete({ onRestart, total = 6 }: NatModuleCompletePro
         </p>
         <div className="w-full rounded-lg bg-primary/5 p-3">
           <p className="text-mobile-sm font-semibold text-primary-dark">
-            Próximamente: Políticas de Red (Sprint 4)
+            Siguiente módulo: Políticas de Red
           </p>
           <p className="text-mobile-xs text-neutral-600">
             Reglas de seguridad encadenadas y el orden que lo decide todo.
           </p>
+          <Button
+            variant="primary"
+            size="md"
+            className="mt-2 w-full"
+            onClick={() => navigateTo('policy')}
+          >
+            Entrar a Políticas de Red
+          </Button>
         </div>
         <Button variant="primary" size="lg" className="w-full" onClick={() => navigateTo('home')}>
           Volver al inicio

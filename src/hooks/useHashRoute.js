@@ -19,12 +19,14 @@ export function parseRoute(hash) {
   if (clean === 'home') return 'home';
   if (clean === 'profile') return 'profile';
   if (clean === 'nat') return 'nat';
+  if (clean === 'policy') return 'policy';
   return 'game';
 }
 
 // Rutas que exigen sesión iniciada. El acceso sin auth se redirige a 'auth' (AC#4 EGC-10).
-// 'nat' (módulo La Centralita, EGC-12) es contenido protegido como 'home'.
-const PROTECTED_ROUTES = new Set(['home', 'profile', 'calibration', 'nat']);
+// 'nat' (módulo La Centralita, EGC-12) y 'policy' (módulo Políticas de Red, EGC-18) son
+// contenido protegido como 'home'. Ruta en inglés por consistencia con home/nat.
+const PROTECTED_ROUTES = new Set(['home', 'profile', 'calibration', 'nat', 'policy']);
 
 /** ¿La ruta requiere usuario autenticado? */
 export function isProtectedRoute(route) {

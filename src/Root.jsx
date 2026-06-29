@@ -11,6 +11,7 @@ import AppShell from './components/shell/AppShell';
 import ProfileScreen from './components/shell/ProfileScreen';
 import FirewallModule from './components/modules/firewall/FirewallModule';
 import NatModule from './components/modules/nat/NatModule';
+import PolicyModule from './components/modules/policy/PolicyModule';
 import { AvatarBubble } from './components/ui';
 
 // Splash neutro mientras la sesión hidrata. NUNCA muestra contenido protegido (AC#4):
@@ -80,6 +81,13 @@ export default function Root() {
     content = (
       <AppShell route={route}>
         <NatModule />
+      </AppShell>
+    );
+  } else if (route === 'policy') {
+    // EGC-18: el módulo "Políticas de Red" (orden de reglas y shadowing).
+    content = (
+      <AppShell route={route}>
+        <PolicyModule />
       </AppShell>
     );
   } else {

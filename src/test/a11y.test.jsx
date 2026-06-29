@@ -11,6 +11,11 @@ import { StreakFreezeModal } from '../components/streak/StreakFreezeModal';
 import { CalendarStrip } from '../components/streak/StreakDashboard';
 import { NatEditorMobile } from '../components/modules/nat/NatEditorMobile';
 import { NAT_LEVELS } from '../hooks/useNatModule';
+import { PolicyListEditorMobile } from '../components/modules/policy/PolicyListEditorMobile';
+import { ShadowBanner } from '../components/modules/policy/ShadowBanner';
+import { PolicyModuleComplete } from '../components/modules/policy/PolicyModuleComplete';
+import { POLICY_LEVELS, makeSeedRules } from '../hooks/usePolicyModule';
+import { detectShadowing } from '../lib/firewall-engine';
 
 // Gate WCAG AA ejecutable (WBS 2.3 / 6.2). Corre axe-core sobre el árbol
 // renderizado en jsdom. color-contrast no se evalúa en jsdom (no hay layout
@@ -94,6 +99,34 @@ describe('Accesibilidad (axe-core, WCAG 2 A/AA)', () => {
     const violations = await noViolations(
       <NatEditorMobile level={NAT_LEVELS[0]} config={config} onChange={() => {}} onSubmit={() => {}} />
     );
+    expect(violations).toEqual([]);
+  });
+
+  it('PolicyListEditorMobile (reglas ordenadas + shadowing) no tiene violaciones', async () => {
+    const rules = makeSeedRules(POLICY_LEVELS[0]);
+    const shadowReports = detectShadowing(rules);
+    const violations = await noViolations(
+      <PolicyListEditorMobile
+        rules={rules}
+        shadowReports={shadowReports}
+        onMoveUp={() => {}}
+        onMoveDown={() => {}}
+        onToggleDisabled={() => {}}
+        onSetField={() => {}}
+        onSubmit={() => {}}
+      />
+    );
+    expect(violations).toEqual([]);
+  });
+
+  it('ShadowBanner (aviso de shadowing) no tiene violaciones', async () => {
+    const shadowReports = detectShadowing(makeSeedRules(POLICY_LEVELS[0]));
+    const violations = await noViolations(<ShadowBanner shadowReports={shadowReports} />);
+    expect(violations).toEqual([]);
+  });
+
+  it('PolicyModuleComplete (pantalla final) no tiene violaciones', async () => {
+    const violations = await noViolations(<PolicyModuleComplete onRestart={() => {}} />);
     expect(violations).toEqual([]);
   });
 });

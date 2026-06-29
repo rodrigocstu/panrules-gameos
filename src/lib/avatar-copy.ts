@@ -81,3 +81,18 @@ export const NAT_INTERVENTIONS: AvatarInterventionCopy = {
     'Terminaste el módulo de NAT. SNAT, DNAT, y el que más confunde a todos — el U-Turn. Ya sabes cuándo PAN-OS aplica la traducción y cómo afecta las zonas en la security policy. Eso es exactamente lo que distingue a un operador que configura de uno que entiende.',
   ],
 };
+
+// Copy del módulo "Políticas de Red" (orden y shadowing, EGC-18). Las líneas in-level
+// (first/second/third_wrong, correct) son DETERMINISTAS por `verdict.reasonCode` del motor e
+// idénticas entre módulos, así que se heredan tal cual de AVATAR_INTERVENTIONS; SOLO
+// `module_complete` sería específico de este módulo.
+//
+// GATE UXW (igual que EGC-11/EGC-12): la bible §4.5 (docs/avatar-personality-bible.md, rama
+// feat/egc-2-avatar-bible) NO tiene línea "[LOGRO DE MODULO — Políticas de Red]". Por el Iron Law
+// / norma no-new-copy NO se inventa la línea aquí: `module_complete` se ship VACÍO y la pantalla
+// final degrada sin burbuja (useAvatarInterventions hace `?? null` y AvatarIntervention no
+// renderiza con message vacío). Cuando UXW redacte+firme la línea verbatim, se rellena este array.
+export const POLICY_INTERVENTIONS: AvatarInterventionCopy = {
+  ...AVATAR_INTERVENTIONS,
+  module_complete: [],
+};
