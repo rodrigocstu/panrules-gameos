@@ -278,3 +278,133 @@ export interface DecryptionConfig {
   type: 'ssl-forward-proxy' | 'ssl-inbound-inspection' | 'ssh-proxy';
   profile?: string;
 }
+
+// ─── User & Auth (EGC-6) ─────────────────────────────────────────────────────
+export type LearningPath = 'beginner' | 'intermediate' | 'advanced';
+
+export interface UserProfile {
+  /** UUID generado en el registro; opaco para el cliente. */
+  userId: string;
+  email: string;
+  displayName: string;
+  /** ISO 8601 — marca temporal del registro. */
+  createdAt: string;
+  /** ISO 8601 — base para el cálculo de D1/D7/D30. */
+  lastSeenAt: string;
+  learningPath: LearningPath;
+  /** true una vez que el usuario completó el test de calibración. */
+  calibrationDone: boolean;
+}
+
+export interface AuthSession {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  /** Unix timestamp en ms de expiración del accessToken. */
+  expiresAt: number;
+}
+
+// ─── Avatar (mentor sin culpa) (EGC-6) ───────────────────────────────────────
+/** Estado de ánimo del avatar mentor; nunca expresa reproche (invariante UX). */
+export type AvatarMood = 'neutral' | 'encouraging' | 'celebrating' | 'concerned';
+export type AvatarSkin = 'default' | 'cyber' | 'analyst';
+
+export interface Avatar {
+  userId: string;
+  skin: AvatarSkin;
+  mood: AvatarMood;
+  /** Puntos de experiencia acumulados — cosmético, no desbloquea contenido premium. */
+  xp: number;
+  unlockedSkins: AvatarSkin[];
+  /** ISO 8601 — última vez que el usuario interactuó con el avatar. */
+  lastInteractionAt: string;
+}
+
+// ─── Streak (EGC-6) ──────────────────────────────────────────────────────────
+export interface Streak {
+  userId: string;
+  /** Días consecutivos con al menos 1 nivel completado. */
+  currentStreak: number;
+  longestStreak: number;
+  /** ISO 8601 — último check-in registrado. */
+  lastCheckinAt: string;
+  totalDaysActive: number;
+  /** ISO 8601 — día 1 del registro (streak arranca aquí). */
+  startedAt: string;
+}
+
+export interface StreakDay {
+  /** YYYY-MM-DD en hora local del dispositivo. */
+  date: string;
+  active: boolean;
+  levelsCompleted: number;
+}
+
+// ─── Calibration (EGC-6) ─────────────────────────────────────────────────────
+/** Temas evaluados en el test de calibración inicial (≤ 5 min). */
+export type CalibrationTopic =
+  | 'zones'
+  | 'app-id'
+  | 'nat-type'
+  | 'policy-order'
+  | 'security-profiles';
+
+export interface CalibrationQuestion {
+  id: string;
+  topic: CalibrationTopic;
+  prompt: LocalizedText;
+  options: Array<{ id: string; text: LocalizedText }>;
+  correctOptionId: string;
+}
+
+export interface CalibrationAnswer {
+  questionId: string;
+  selectedOptionId: string;
+  /** Tiempo empleado en esta pregunta en milisegundos. */
+  timeSpentMs: number;
+}
+
+export interface CalibrationResult {
+  userId: string;
+  /** ISO 8601. */
+  completedAt: string;
+  learningPath: LearningPath;
+  /** Score 0–1 por tema evaluado. */
+  topicScores: Record<CalibrationTopic, number>;
+  /** `id` del Level en src/data/levels.ts desde donde arranca el learning path. */
+  recommendedStartLevel: number;
+  /** Debe ser ≤ 300_000 ms (5 min) — AC de EGC-10. */
+  durationMs: number;
+}
+
+// ─── Metrics D1/D7/D30 (EGC-6) ───────────────────────────────────────────────
+export type MetricEventType =
+  | 'session_start'
+  | 'level_started'
+  | 'level_completed'
+  | 'level_failed'
+  | 'calibration_completed'
+  | 'streak_checkin'
+  | 'paywall_seen'
+  | 'avatar_interaction';
+
+export interface MetricEvent {
+  eventType: MetricEventType;
+  userId: string;
+  /** ISO 8601. */
+  timestamp: string;
+  /** Datos específicos del evento; tipado libre para no acoplar aquí. */
+  payload?: Record<string, unknown>;
+}
+
+export interface RetentionMetrics {
+  userId: string;
+  /** Activo dentro de las primeras 24 h del registro. */
+  d1Active: boolean;
+  /** Activo al menos una vez en los primeros 7 días. */
+  d7Active: boolean;
+  /** Activo al menos una vez en los primeros 30 días. */
+  d30Active: boolean;
+  /** ISO 8601 — última sesión registrada. */
+  lastSeenAt: string;
+}
