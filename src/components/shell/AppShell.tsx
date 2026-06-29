@@ -37,7 +37,6 @@ export function AppShell({ children, route = 'home' }: AppShellProps) {
     streak,
     todayCheckedIn,
     isStreakBroken,
-    freezeTokens,
     loading,
   });
 

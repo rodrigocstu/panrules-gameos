@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { HomeScreen } from './HomeScreen';
+import { FIREWALL_LEVELS } from '../../hooks/useFirewallModule';
+import { NAT_LEVELS } from '../../hooks/useNatModule';
+import { POLICY_LEVELS } from '../../hooks/usePolicyModule';
 
 // HomeScreen (EGC-19): overview navegable del track Fundamentos. Lee progreso read-only de
 // localStorage (claves egc_firewall_progress / egc_nat_progress / egc_policy_progress) y los CTA
@@ -73,5 +76,40 @@ describe('HomeScreen', () => {
     expect(() => render(<HomeScreen />)).not.toThrow();
     const card = screen.getByRole('region', { name: /Políticas de Red/ });
     expect(card).toHaveAccessibleName(/0 de 9/);
+  });
+
+  // EGC-14 (bug bash, P2 drift silencioso): los totales de las tarjetas (9/6/9) están hardcodeados
+  // en MODULES, desacoplados de las fuentes de verdad de niveles (FIREWALL/NAT/POLICY_LEVELS). Si
+  // alguien cambia el rango de niveles de un módulo sin actualizar MODULES, las tarjetas mentirían
+  // sobre el progreso y ningún test lo notaría. Este test ancla el total RENDERIZADO de cada
+  // tarjeta a la longitud real de su array de niveles: sembrando el progreso a "todo completo"
+  // hasta la longitud real, el nombre accesible debe leer "<len> de <len>" y mostrar el badge
+  // "Completado". Si el total se desincroniza en cualquier dirección, la aserción falla.
+  // (Aserción sobre el render en vez de exportar MODULES: exportar una const no-componente desde
+  //  HomeScreen.tsx dispara react-refresh/only-export-components, que rompe la norma cero-warnings).
+  describe('sincronización de totales con las fuentes de niveles (anti-drift, EGC-14)', () => {
+    const MODULES_UNDER_TEST = [
+      { storageKey: 'egc_firewall_progress', cardName: /El Portero/, levels: FIREWALL_LEVELS },
+      { storageKey: 'egc_nat_progress', cardName: /La Centralita/, levels: NAT_LEVELS },
+      { storageKey: 'egc_policy_progress', cardName: /Políticas de Red/, levels: POLICY_LEVELS },
+    ];
+
+    it.each(MODULES_UNDER_TEST)(
+      'la tarjeta $storageKey usa la longitud real de su array de niveles como total',
+      ({ storageKey, cardName, levels }) => {
+        const len = levels.length;
+        // Sembrar el módulo como "todo completo" hasta su longitud real de niveles.
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({ completed: Array.from({ length: len }, (_, i) => i + 1) })
+        );
+        render(<HomeScreen />);
+        const card = screen.getByRole('region', { name: cardName });
+        // El total renderizado debe ser exactamente la longitud real: "<len> de <len>".
+        expect(card).toHaveAccessibleName(new RegExp(`${len} de ${len}`));
+        // Y como completados (len) >= total, debe mostrarse el badge "Completado".
+        expect(within(card).getByText('Completado')).toBeInTheDocument();
+      }
+    );
   });
 });
