@@ -43,6 +43,10 @@ describe('parseRoute', () => {
     expect(parseRoute('#/nat')).toBe('nat');
   });
 
+  it('reconoce #/policy como ruta policy (módulo Políticas de Red, EGC-18)', () => {
+    expect(parseRoute('#/policy')).toBe('policy');
+  });
+
   it('devuelve game para rutas desconocidas', () => {
     expect(parseRoute('#/whatever')).toBe('game');
   });
@@ -74,11 +78,20 @@ describe('navigateTo', () => {
     navigateTo('nat');
     expect(window.location.hash).toBe('#/nat');
   });
+
+  it('pone el hash en #/policy al navegar a policy', () => {
+    navigateTo('policy');
+    expect(window.location.hash).toBe('#/policy');
+  });
 });
 
 describe('isProtectedRoute', () => {
   it('nat es una ruta protegida (EGC-12)', () => {
     expect(isProtectedRoute('nat')).toBe(true);
+  });
+
+  it('policy es una ruta protegida (EGC-18)', () => {
+    expect(isProtectedRoute('policy')).toBe(true);
   });
 
   it('game no es una ruta protegida', () => {
