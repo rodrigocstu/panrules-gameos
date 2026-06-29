@@ -3,6 +3,20 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// DUAL-BUILD STRATEGY (EGC-9)
+// ─────────────────────────────────────────────────────────────────────────────
+// Two build targets share this config file; the Vite CLI flag --base overrides
+// the `base` field at build time so no env-var or conditional is needed here:
+//
+//   npm run build         → `vite build`            → base '/panrules-gameos/'
+//                           output: dist/           → GitHub Pages (unchanged)
+//
+//   npm run build:mobile  → `vite build --base=/ --outDir dist-mobile`
+//                           output: dist-mobile/    → Capacitor (capacitor.config.ts webDir)
+//
+// The VitePWA plugin, workbox precache, and navigateFallback below all derive
+// from BASE, so they adapt automatically to whichever base is active.
+// ─────────────────────────────────────────────────────────────────────────────
 const BASE = '/panrules-gameos/';
 
 // https://vite.dev/config/

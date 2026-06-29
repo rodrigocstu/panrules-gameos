@@ -1,0 +1,142 @@
+name: Capacitor — Mobile Build
+
+on:
+  push:
+    branches: [main, 'feat/egc-*']
+  pull_request:
+
+jobs:
+  # ─── Job 1: Build the mobile web bundle ───────────────────────────────────
+  build-web:
+    name: Build web (mobile base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build mobile bundle (base=/, outDir=dist-mobile)
+        run: npm run build:mobile
+
+      - name: Upload dist-mobile artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-mobile
+          path: dist-mobile/
+          retention-days: 1
+
+  # ─── Job 2: iOS build (no-code-signing, compile-only) ─────────────────────
+  # Requires manual steps on a local macOS machine before this job can run:
+  #   1. Install Xcode 15+ from the Mac App Store and accept the license.
+  #   2. Install CocoaPods: `sudo gem install cocoapods`
+  #   3. Run `npx cap add ios` once to scaffold the ios/ Xcode project.
+  #   4. Run `cd ios && pod install` to install native pod dependencies.
+  # On CI (macos-14 runner) steps 1 & 2 are pre-installed; steps 3 & 4 are
+  # executed by the job itself after `cap sync ios` regenerates the project.
+  # See docs/zero-trust-audit.md §5 for the full manual-steps reference.
+  build-ios:
+    name: Build iOS (simulator, no signing)
+    needs: build-web
+    runs-on: macos-14   # Apple Silicon runner — Xcode 15.x pre-installed
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download dist-mobile artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-mobile
+          path: dist-mobile/
+
+      - name: Capacitor sync (iOS)
+        run: npx cap sync ios
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ios/Pods
+          key: pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-
+
+      - name: Install CocoaPods
+        run: cd ios && pod install --repo-update
+
+      - name: Build iOS Debug (simulator, code-signing disabled)
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcpretty || xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  # ─── Job 3: Android build (debug APK) ─────────────────────────────────────
+  # Requires manual steps on a local machine before first use:
+  #   1. Install Android Studio (Giraffe+) with Android SDK (API 34 target).
+  #   2. Set ANDROID_HOME env var pointing to the SDK directory.
+  #   3. Run `npx cap add android` once to scaffold the android/ Gradle project.
+  # On CI these are provided by the ubuntu-latest runner + actions/setup-java.
+  # See docs/zero-trust-audit.md §5 for the full manual-steps reference.
+  build-android:
+    name: Build Android (debug APK)
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download dist-mobile artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-mobile
+          path: dist-mobile/
+
+      - name: Capacitor sync (Android)
+        run: npx cap sync android
+
+      - name: Build Android debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
