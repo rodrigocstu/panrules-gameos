@@ -9,6 +9,7 @@ import WarRoom from './components/WarRoom.jsx';
 import OnboardingFlow from './components/onboarding/OnboardingFlow';
 import AppShell from './components/shell/AppShell';
 import ProfileScreen from './components/shell/ProfileScreen';
+import FirewallModule from './components/modules/firewall/FirewallModule';
 import { AvatarBubble } from './components/ui';
 
 // Splash neutro mientras la sesión hidrata. NUNCA muestra contenido protegido (AC#4):
@@ -63,6 +64,14 @@ export default function Root() {
     content = (
       <AppShell route={route}>
         <ProfileScreen user={auth.user} onLogout={auth.logout} />
+      </AppShell>
+    );
+  } else if (route === 'home') {
+    // EGC-11: la home autenticada monta el módulo Firewall "El Portero". La ruta legacy
+    // 'game' (else) conserva el simulador de escritorio FirewallNGFW.
+    content = (
+      <AppShell route={route}>
+        <FirewallModule />
       </AppShell>
     );
   } else {
