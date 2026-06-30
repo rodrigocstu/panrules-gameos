@@ -29,7 +29,6 @@ export interface GlobalAvatarSituationSignals {
   streak: Streak | null;
   todayCheckedIn: boolean;
   isStreakBroken: boolean;
-  freezeTokens: number;
   /** useStreak aún hidratando desde localStorage: no decidir hasta que `streak` sea real
    * (evita disparar `welcome` en la ventana de carga, cuando `streak` es null transitorio). */
   loading: boolean;

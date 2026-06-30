@@ -113,7 +113,6 @@ describe('useGlobalAvatarSituations (one-shot, freeze imperativo, cleanup)', () 
     streak: makeStreak({ totalDaysActive: 1, currentStreak: 1 }),
     todayCheckedIn: false,
     isStreakBroken: false,
-    freezeTokens: 0,
     loading: false,
   };
 
@@ -121,7 +120,6 @@ describe('useGlobalAvatarSituations (one-shot, freeze imperativo, cleanup)', () 
     streak: makeStreak({ lastCheckinAt: new Date().toISOString(), currentStreak: 4, totalDaysActive: 12 }),
     todayCheckedIn: true,
     isStreakBroken: false,
-    freezeTokens: 1,
     loading: false,
   };
 
@@ -161,6 +159,34 @@ describe('useGlobalAvatarSituations (one-shot, freeze imperativo, cleanup)', () 
   it('onFreezeConsumed dispara la línea §4.4 freeze', () => {
     const { result } = renderHook(() => useGlobalAvatarSituations(neutralSignals));
     expect(result.current.currentMessage).toBeNull();
+    act(() => result.current.onFreezeConsumed());
+    expect(result.current.currentMessage).toBe(GLOBAL_INTERVENTIONS.broken_freeze);
+    expect(result.current.isVisible).toBe(true);
+  });
+
+  // EGC-14 (bug bash, reliability — caracterización, severidad baja): el efecto de milestone y
+  // onFreezeConsumed escriben sobre la MISMA máquina de un-solo-bubble vía showMessage. Si el
+  // milestone (3/7/14) y el consumo de freeze coinciden en el mismo ciclo, gana el último
+  // escritor (no determinista en runtime). Este test ancla el comportamiento OBSERVADO para que
+  // cualquier cambio futuro de la máquina de burbujas sea visible. Resultado: el bubble de freeze
+  // roto (el más informativo para el usuario) sobrevive cuando es el último escritor — NO se
+  // pierde, así que la carrera no exige fix de lógica en esta tarea de gate.
+  it('caracteriza la carrera milestone/freeze: el bubble de freeze (último escritor) gana al milestone', () => {
+    // Hito 3 sin ver previamente: el efecto one-shot dispara streak_3 al montar.
+    const milestoneSignals: GlobalAvatarSituationSignals = {
+      streak: makeStreak({
+        lastCheckinAt: new Date().toISOString(),
+        currentStreak: 3,
+        totalDaysActive: 20,
+      }),
+      todayCheckedIn: true,
+      isStreakBroken: false,
+      loading: false,
+    };
+    const { result } = renderHook(() => useGlobalAvatarSituations(milestoneSignals));
+    expect(result.current.currentMessage).toBe(GLOBAL_INTERVENTIONS.streak_3);
+
+    // Consumir un freeze en el mismo ciclo sobrescribe el bubble del milestone.
     act(() => result.current.onFreezeConsumed());
     expect(result.current.currentMessage).toBe(GLOBAL_INTERVENTIONS.broken_freeze);
     expect(result.current.isVisible).toBe(true);
