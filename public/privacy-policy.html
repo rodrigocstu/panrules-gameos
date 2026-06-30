@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Política de Privacidad — CiberSec Edugame</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        line-height: 1.6;
+        max-width: 48rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+        color: #0f172a;
+        background: #f8fafc;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #f8fafc;
+          background: #0f172a;
+        }
+        a {
+          color: #fb923c;
+        }
+        table,
+        th,
+        td {
+          border-color: #334155;
+        }
+      }
+      h1 {
+        font-size: 1.75rem;
+        line-height: 1.2;
+      }
+      h2 {
+        margin-top: 2.5rem;
+        font-size: 1.25rem;
+        border-bottom: 1px solid #cbd5e1;
+        padding-bottom: 0.25rem;
+      }
+      a {
+        color: #ea580c;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        border: 1px solid #cbd5e1;
+        padding: 0.5rem 0.65rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: rgba(234, 88, 12, 0.08);
+      }
+      .placeholder {
+        font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+        background: rgba(234, 88, 12, 0.12);
+        padding: 0 0.25rem;
+        border-radius: 0.25rem;
+      }
+      .meta {
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+      footer {
+        margin-top: 3rem;
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Política de Privacidad — CiberSec Edugame</h1>
+    <p class="meta">
+      Última actualización: <span class="placeholder">[EFFECTIVE_DATE]</span> · Responsable del
+      tratamiento: <span class="placeholder">[ENTITY]</span> · Contacto:
+      <span class="placeholder">[CONTACT_EMAIL]</span>
+    </p>
+    <p>
+      <span class="placeholder">[ENTITY]</span> ("nosotros") desarrolla
+      <strong>CiberSec Edugame</strong> (identificador de aplicación
+      <code>com.panrules.edugame</code>), una aplicación educativa que enseña conceptos de
+      ciberseguridad mediante la simulación de la consola de un firewall NGFW. Esta política
+      describe qué datos trata la aplicación, con qué finalidad y bajo qué base legal, y los
+      derechos que te asisten. Está redactada conforme al RGPD (UE), su régimen reforzado para
+      menores (GDPR-K) y la <abbr title="Children's Online Privacy Protection Act">COPPA</abbr>
+      de los Estados Unidos.
+    </p>
+
+    <h2>1. Datos que tratamos</h2>
+    <p>
+      La aplicación recoge el mínimo de datos necesario para operar las cuentas y la progresión de
+      aprendizaje. No utilizamos SDK de publicidad ni de analítica de terceros, y no vendemos ni
+      compartimos datos personales con terceros para fines de marketing.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Dato</th>
+          <th>¿Se recoge?</th>
+          <th>Dónde se almacena</th>
+          <th>Finalidad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Credenciales de cuenta (correo electrónico + contraseña)</td>
+          <td>Sí, en el registro</td>
+          <td>
+            La contraseña se cifra con bcrypt en el servidor; nunca se almacena en el dispositivo ni
+            se retiene en la aplicación tras el envío del formulario.
+          </td>
+          <td>Autenticación de la cuenta y recuperación de acceso.</td>
+        </tr>
+        <tr>
+          <td>Token de sesión (JWT) y token de refresco</td>
+          <td>Sí</td>
+          <td>
+            Almacenamiento seguro del sistema operativo (Keychain en iOS / Keystore en Android).
+            <strong>Nunca</strong> en <code>localStorage</code>.
+          </td>
+          <td>Mantener la sesión iniciada de forma segura.</td>
+        </tr>
+        <tr>
+          <td>Progreso de aprendizaje, racha y respuestas de calibración</td>
+          <td>Sí</td>
+          <td>
+            Asociado a tu identificador de usuario en la base de datos del backend. En el
+            dispositivo solo se guardan, sin datos personales, indicadores de actividad por módulo
+            (claves
+            <code>egc_firewall_progress</code>, <code>egc_nat_progress</code>,
+            <code>egc_policy_progress</code>) y una caché técnica de preferencias.
+          </td>
+          <td>Personalizar la ruta de aprendizaje y medir el avance.</td>
+        </tr>
+        <tr>
+          <td>Telemetría agregada anónima</td>
+          <td>Opcional — desactivada por defecto (opt-in)</td>
+          <td>
+            Solo en el dispositivo (<code>localStorage</code>), como agregados anónimos. No contiene
+            datos personales y no se envía por la red.
+          </td>
+          <td>Mejorar el contenido educativo a partir de patrones de uso anónimos.</td>
+        </tr>
+        <tr>
+          <td>Notificaciones push</td>
+          <td>
+            Solo si concedes el permiso, que se solicita en el momento en que activas los
+            recordatorios de racha
+          </td>
+          <td>Token de notificaciones gestionado por el servicio de push del sistema operativo.</td>
+          <td>Recordatorios opcionales para mantener tu racha de estudio.</td>
+        </tr>
+        <tr>
+          <td>Publicidad y analítica de terceros</td>
+          <td>No</td>
+          <td>No aplica — la aplicación no integra estos SDK.</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Compras dentro de la aplicación / pagos</td>
+          <td>No</td>
+          <td>No aplica — la aplicación no procesa pagos ni datos de facturación.</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Base legal del tratamiento (RGPD)</h2>
+    <ul>
+      <li>
+        <strong>Ejecución de un contrato</strong> (art. 6.1.b RGPD): las credenciales, la sesión y
+        el progreso de aprendizaje son necesarios para prestarte el servicio educativo que
+        solicitas.
+      </li>
+      <li>
+        <strong>Consentimiento</strong> (art. 6.1.a RGPD): la telemetría anónima y las
+        notificaciones push solo se activan si das tu consentimiento explícito, y puedes retirarlo
+        en cualquier momento.
+      </li>
+    </ul>
+
+    <h2>3. Conservación de los datos</h2>
+    <p>
+      Conservamos los datos de la cuenta y de progreso mientras la cuenta esté activa. Si solicitas
+      la eliminación de tu cuenta, borramos los datos personales asociados salvo aquellos que
+      debamos conservar por obligación legal. Los indicadores de progreso y la telemetría anónima
+      guardados en el dispositivo se eliminan al desinstalar la aplicación o al borrar sus datos.
+    </p>
+
+    <h2>4. Encargados del tratamiento (subprocesadores)</h2>
+    <p>
+      Utilizamos un proveedor de autenticación y base de datos para almacenar de forma segura las
+      credenciales (con hash) y los datos de progreso asociados a tu cuenta:
+      <span class="placeholder">[AUTH_BACKEND_PROVIDER]</span>. Este proveedor trata los datos por
+      cuenta nuestra y bajo el correspondiente acuerdo de tratamiento de datos. Todo el tráfico
+      viaja cifrado mediante TLS (HTTPS).
+    </p>
+
+    <h2>5. Privacidad de los menores (COPPA y GDPR-K)</h2>
+    <p>
+      CiberSec Edugame está dirigida a estudiantes de ciberseguridad, lo que puede incluir a menores
+      de edad. Por ello aplicamos, de forma preventiva, las salvaguardas reforzadas para menores con
+      independencia de la clasificación de edad final de cada tienda:
+    </p>
+    <ul>
+      <li>
+        <strong>Minimización para menores:</strong> no recogemos más datos que el correo y el
+        progreso necesarios para el servicio educativo; no hay perfilado publicitario ni rastreo
+        entre aplicaciones.
+      </li>
+      <li>
+        <strong>Consentimiento parental verificable:</strong> cuando el usuario sea menor de 13 años
+        (o de la edad de consentimiento digital aplicable en su país, que en partes de la UE llega a
+        16), se requiere el consentimiento verificable de su madre, padre o tutor antes de crear la
+        cuenta. Las familias pueden ejercer este consentimiento, revisar o pedir la eliminación de
+        los datos del menor escribiendo a <span class="placeholder">[CONTACT_EMAIL]</span>.
+      </li>
+      <li>
+        <strong>Sin publicidad dirigida a menores:</strong> la aplicación no muestra publicidad ni
+        utiliza analítica de terceros.
+      </li>
+      <li>
+        <strong>Derecho de supresión:</strong> la madre, el padre o el tutor pueden solicitar en
+        cualquier momento que dejemos de recoger datos del menor y que eliminemos los ya recabados.
+      </li>
+    </ul>
+
+    <h2>6. Tus derechos</h2>
+    <p>
+      Puedes ejercer los derechos de acceso, rectificación, supresión, limitación, portabilidad y
+      oposición sobre tus datos personales. Para ello, o para retirar un consentimiento previamente
+      otorgado, escríbenos a
+      <span class="placeholder">[CONTACT_EMAIL]</span>. También tienes derecho a presentar una
+      reclamación ante la autoridad de control de protección de datos competente en tu país.
+    </p>
+
+    <h2>7. Seguridad</h2>
+    <p>
+      Las contraseñas se almacenan con hash bcrypt en el servidor y nunca en el dispositivo. Los
+      tokens de sesión se guardan en el almacenamiento seguro del sistema operativo (Keychain /
+      Keystore), no en
+      <code>localStorage</code>. Todas las comunicaciones de red utilizan HTTPS.
+    </p>
+
+    <h2>8. Cambios en esta política</h2>
+    <p>
+      Podemos actualizar esta política para reflejar cambios en la aplicación o en la normativa.
+      Publicaremos la versión vigente en
+      <span class="placeholder">[POLICY_URL]</span> e indicaremos la fecha de la última
+      actualización en la parte superior.
+    </p>
+
+    <h2>9. Contacto</h2>
+    <p>
+      Responsable del tratamiento:
+      <span class="placeholder">[ENTITY]</span>. Para cualquier consulta sobre esta política o sobre
+      tus datos, escríbenos a <span class="placeholder">[CONTACT_EMAIL]</span>.
+    </p>
+
+    <footer>
+      <p>
+        Marcadores que el equipo (HOTL) debe completar antes de publicar:
+        <code>[ENTITY]</code>, <code>[CONTACT_EMAIL]</code>, <code>[POLICY_URL]</code>,
+        <code>[EFFECTIVE_DATE]</code> y <code>[AUTH_BACKEND_PROVIDER]</code>.
+      </p>
+    </footer>
+  </body>
+</html>

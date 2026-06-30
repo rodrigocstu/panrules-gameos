@@ -27,7 +27,7 @@ function crc32(buf) {
     c ^= buf[i];
     for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1));
   }
-  return (~c) >>> 0;
+  return ~c >>> 0;
 }
 
 function chunk(type, data) {
@@ -40,22 +40,45 @@ function chunk(type, data) {
   return Buffer.concat([len, body, crc]);
 }
 
-function encodePng(width, height, rgba) {
+/**
+ * Encodes an RGBA pixel buffer to PNG.
+ *
+ * `opts.rgb = true` emits a 3-channel, **alpha-free** PNG (color type 2):
+ * required for App Store marketing icons, which App Store Connect rejects when
+ * they carry an alpha channel — even a fully-opaque one. The 4th (alpha) byte
+ * of every pixel is dropped during row assembly. The default (type 6, RGBA) is
+ * kept for the PWA / maskable icons, which legitimately use transparency.
+ */
+function encodePng(width, height, rgba, { rgb = false } = {}) {
   const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
   ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // color type RGBA
+  ihdr[9] = rgb ? 2 : 6; // color type: 2 = RGB (no alpha), 6 = RGBA
   ihdr[10] = 0;
   ihdr[11] = 0;
   ihdr[12] = 0;
   // add filter byte (0) per row
-  const stride = width * 4;
+  const channels = rgb ? 3 : 4;
+  const srcStride = width * 4; // source buffer is always RGBA
+  const stride = width * channels;
   const raw = Buffer.alloc((stride + 1) * height);
   for (let y = 0; y < height; y++) {
-    raw[y * (stride + 1)] = 0;
-    rgba.copy(raw, y * (stride + 1) + 1, y * stride, y * stride + stride);
+    const rowStart = y * (stride + 1);
+    raw[rowStart] = 0; // filter type: none
+    if (rgb) {
+      // Copy R,G,B and drop the alpha byte per pixel.
+      for (let x = 0; x < width; x++) {
+        const s = y * srcStride + x * 4;
+        const d = rowStart + 1 + x * 3;
+        raw[d] = rgba[s];
+        raw[d + 1] = rgba[s + 1];
+        raw[d + 2] = rgba[s + 2];
+      }
+    } else {
+      rgba.copy(raw, rowStart + 1, y * srcStride, y * srcStride + srcStride);
+    }
   }
   const idat = deflateSync(raw, { level: 9 });
   return Buffer.concat([
@@ -80,7 +103,7 @@ function blend(buf, i, color) {
  * `inset` (0..1) shrinks the artwork toward the centre so the maskable
  * variant keeps the shield inside the safe zone.
  */
-function drawIcon(size, { transparentBg = false, inset = 0 } = {}) {
+function drawIcon(size, { transparentBg = false, inset = 0, rgb = false } = {}) {
   const buf = Buffer.alloc(size * size * 4);
   for (let i = 0; i < buf.length; i += 4) {
     if (transparentBg) {
@@ -111,7 +134,7 @@ function drawIcon(size, { transparentBg = false, inset = 0 } = {}) {
     // width factor: full near top, narrows to 0 at bottom point
     let wf;
     if (t < 0.6) wf = 1 - 0.15 * (t / 0.6);
-    else wf = (0.85) * (1 - (t - 0.6) / 0.4);
+    else wf = 0.85 * (1 - (t - 0.6) / 0.4);
     const w = halfW * Math.max(wf, 0);
     return Math.abs(x - cx) <= w;
   }
@@ -141,16 +164,13 @@ function drawIcon(size, { transparentBg = false, inset = 0 } = {}) {
       // shield fill (accent)
       blend(buf, i, ACCENT);
       // checkmark in white on top
-      const d = Math.min(
-        distToSeg(x + 0.5, y + 0.5, p1, p2),
-        distToSeg(x + 0.5, y + 0.5, p2, p3)
-      );
+      const d = Math.min(distToSeg(x + 0.5, y + 0.5, p1, p2), distToSeg(x + 0.5, y + 0.5, p2, p3));
       if (d <= stroke / 2) {
         blend(buf, i, WHITE);
       }
     }
   }
-  return encodePng(size, size, buf);
+  return encodePng(size, size, buf, { rgb });
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -158,4 +178,7 @@ writeFileSync(join(OUT_DIR, 'pwa-192.png'), drawIcon(192));
 writeFileSync(join(OUT_DIR, 'pwa-512.png'), drawIcon(512));
 writeFileSync(join(OUT_DIR, 'pwa-maskable-512.png'), drawIcon(512, { inset: 1 }));
 writeFileSync(join(OUT_DIR, 'apple-touch-icon.png'), drawIcon(180));
+// App Store marketing icon: 1024×1024, RGB without alpha (App Store Connect
+// rejects icons that carry an alpha channel, even fully-opaque ones).
+writeFileSync(join(OUT_DIR, 'appstore-1024.png'), drawIcon(1024, { rgb: true }));
 console.log('PWA icons written to', OUT_DIR);
