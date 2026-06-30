@@ -1,6 +1,12 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!--
+      Content-Security-Policy: se inyecta en el build (no aquí estáticamente) vía el plugin
+      `cspMeta` de vite.config.js, para no romper el HMR de `npm run dev`. El index.html
+      publicado (dist/ y dist-mobile/) incluye la cabecera CSP (EGC-10, invariante ZT §4.4):
+      default-src 'self'; script-src 'self'; connect-src 'self' https: capacitor: …
+    -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f172a" />

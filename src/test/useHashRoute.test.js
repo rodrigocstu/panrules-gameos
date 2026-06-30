@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { parseRoute, navigateTo, useHashRoute } from '../hooks/useHashRoute.js';
+import {
+  parseRoute,
+  navigateTo,
+  useHashRoute,
+  isProtectedRoute,
+} from '../hooks/useHashRoute.js';
 
 beforeEach(() => {
   window.location.hash = '';
@@ -34,6 +39,18 @@ describe('parseRoute', () => {
     expect(parseRoute('#/warroom')).toBe('warroom');
   });
 
+  it('reconoce #/nat como ruta nat (módulo La Centralita, EGC-12)', () => {
+    expect(parseRoute('#/nat')).toBe('nat');
+  });
+
+  it('reconoce #/policy como ruta policy (módulo Políticas de Red, EGC-18)', () => {
+    expect(parseRoute('#/policy')).toBe('policy');
+  });
+
+  it('reconoce #/firewall como ruta firewall (módulo El Portero, EGC-19)', () => {
+    expect(parseRoute('#/firewall')).toBe('firewall');
+  });
+
   it('devuelve game para rutas desconocidas', () => {
     expect(parseRoute('#/whatever')).toBe('game');
   });
@@ -59,6 +76,34 @@ describe('navigateTo', () => {
   it('pone el hash en #/warroom al navegar a warroom', () => {
     navigateTo('warroom');
     expect(window.location.hash).toBe('#/warroom');
+  });
+
+  it('pone el hash en #/nat al navegar a nat', () => {
+    navigateTo('nat');
+    expect(window.location.hash).toBe('#/nat');
+  });
+
+  it('pone el hash en #/policy al navegar a policy', () => {
+    navigateTo('policy');
+    expect(window.location.hash).toBe('#/policy');
+  });
+});
+
+describe('isProtectedRoute', () => {
+  it('nat es una ruta protegida (EGC-12)', () => {
+    expect(isProtectedRoute('nat')).toBe(true);
+  });
+
+  it('policy es una ruta protegida (EGC-18)', () => {
+    expect(isProtectedRoute('policy')).toBe(true);
+  });
+
+  it('firewall es una ruta protegida (EGC-19)', () => {
+    expect(isProtectedRoute('firewall')).toBe(true);
+  });
+
+  it('game no es una ruta protegida', () => {
+    expect(isProtectedRoute('game')).toBe(false);
   });
 });
 

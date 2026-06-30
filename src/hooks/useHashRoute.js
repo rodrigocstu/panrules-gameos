@@ -14,7 +14,35 @@ export function parseRoute(hash) {
   const clean = (hash || '').replace(/^#\/?/, '').split('?')[0];
   if (clean === 'console') return 'console';
   if (clean === 'warroom') return 'warroom';
+  if (clean === 'auth') return 'auth';
+  if (clean === 'calibration') return 'calibration';
+  if (clean === 'home') return 'home';
+  if (clean === 'firewall') return 'firewall';
+  if (clean === 'profile') return 'profile';
+  if (clean === 'nat') return 'nat';
+  if (clean === 'policy') return 'policy';
   return 'game';
+}
+
+// Rutas que exigen sesión iniciada. El acceso sin auth se redirige a 'auth' (AC#4 EGC-10).
+// 'nat' (módulo La Centralita, EGC-12) y 'policy' (módulo Políticas de Red, EGC-18) son
+// contenido protegido como 'home'. 'firewall' (módulo El Portero, ruta propia desde EGC-19;
+// antes montado bajo 'home') es contenido protegido igual que los demás módulos del track.
+const PROTECTED_ROUTES = new Set(['home', 'firewall', 'profile', 'calibration', 'nat', 'policy']);
+
+/** ¿La ruta requiere usuario autenticado? */
+export function isProtectedRoute(route) {
+  return PROTECTED_ROUTES.has(route);
+}
+
+/** ¿Es la ruta de autenticación (login/registro)? */
+export function isAuthRoute(route) {
+  return route === 'auth';
+}
+
+/** ¿La ruta forma parte del onboarding (auth o calibración)? */
+export function isOnboarding(route) {
+  return route === 'auth' || route === 'calibration';
 }
 
 export function navigateTo(name) {
